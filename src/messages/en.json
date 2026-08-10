@@ -1,0 +1,103 @@
+{
+  "common": {
+    "appName": "Property Management",
+    "create": "Create",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "back": "Back"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "logout": "Log out"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in..."
+  },
+  "properties": {
+    "title": "Properties",
+    "create": "Add property",
+    "createTitle": "Add a property",
+    "name": "Name",
+    "address": "Address",
+    "price": "Price",
+    "status": "Status",
+    "locationType": "Rental type",
+    "statusAvailable": "Available",
+    "statusOccupied": "Occupied",
+    "statusMaintenance": "Under maintenance",
+    "empty": "No properties yet.",
+    "backToList": "Back to properties",
+    "createSuccess": "Property created successfully.",
+    "createNewLease": "Create a lease",
+    "typeLongueDuree": "Long-term",
+    "typeMeubleSimple": "Furnished short-term",
+    "typeCourteDuree": "Short-term"
+  },
+  "leases": {
+    "createTitle": "Create a lease",
+    "tenant": "Tenant",
+    "noTenants": "No tenant is linked to this organization yet.",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "endDateHint": "Leave empty for an indefinite term.",
+    "rentAmount": "Rent amount (per period)",
+    "paymentFrequency": "Payment frequency",
+    "frequencyMensuel": "Monthly",
+    "frequencyTrimestriel": "Quarterly",
+    "frequencySemestriel": "Biannual",
+    "frequencyAnnuel": "Annual",
+    "paymentTiming": "Payment timing",
+    "timingPrepaye": "Prepaid (due at start of period)",
+    "timingPostpaye": "Postpaid (due at end of period)",
+    "securityDeposit": "Security deposit",
+    "utilityDeposit": "Utility deposit",
+    "utilityDepositHint": "Leave empty if no utility deposit is required.",
+    "billingDay": "Fixed billing day",
+    "billingDayHint": "Leave empty to align schedules with the move-in date.",
+    "createSuccess": "Lease created successfully.",
+    "viewSchedules": "View schedules"
+  },
+  "schedules": {
+    "title": "Schedules",
+    "period": "Period",
+    "dueDate": "Due date",
+    "amountDue": "Amount due",
+    "status": "Status",
+    "statusEnAttente": "Pending",
+    "statusPayee": "Paid",
+    "statusPartiellementPayee": "Partially paid",
+    "statusEnRetard": "Late",
+    "statusAnnulee": "Cancelled",
+    "partialBadge": "Reconciliation period",
+    "generate": "Generate schedules",
+    "generateSuccess": "{count, plural, =0 {No new schedule} one {# schedule generated} other {# schedules generated}}.",
+    "empty": "No schedules yet.",
+    "recordPayment": "Record a payment"
+  },
+  "payments": {
+    "formTitle": "Record a payment",
+    "amount": "Amount",
+    "method": "Method",
+    "methodMobileMoney": "Mobile Money",
+    "methodCarte": "Card",
+    "methodEspeces": "Cash",
+    "methodVirement": "Bank transfer",
+    "paymentDate": "Payment date",
+    "reference": "External reference",
+    "submit": "Record payment",
+    "success": "Payment recorded."
+  },
+  "errors": {
+    "uniqueViolation": "This entry already exists.",
+    "foreignKeyViolation": "This action is not possible: a related record is missing or still referenced elsewhere.",
+    "checkViolation": "The submitted data does not satisfy a required constraint.",
+    "permissionDenied": "You do not have permission to perform this action.",
+    "generic": "An unexpected error occurred. Please try again."
+  }
+}

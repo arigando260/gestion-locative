@@ -1,0 +1,80 @@
+import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { getProperty, type PropertyStatus } from "@/data/properties";
+import { getPropertyTypes } from "@/data/property-types";
+import { getPropertyTypeLabel } from "@/lib/property-type-labels";
+import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+// Un bail (Lease) n'a de sens que sur un bien loué à long terme — les biens
+// courte_duree passent par les Réservations (Module 4), pas par cette page.
+// Le trigger validate_lease_property_location_type le refuserait de toute
+// façon ; on évite juste de proposer une action vouée à échouer.
+const LEASE_ELIGIBLE_TYPES = ["longue_duree", "meuble_simple"];
+
+const STATUS_KEY: Record<PropertyStatus, string> = {
+  disponible: "statusAvailable",
+  occupe: "statusOccupied",
+  en_travaux: "statusMaintenance",
+};
+
+export default async function PropertyPage({
+  params,
+}: PageProps<"/[locale]/properties/[propertyId]">) {
+  const { propertyId } = await params;
+  const [property, propertyTypes, permissions] = await Promise.all([
+    getProperty(propertyId),
+    getPropertyTypes(),
+    getCurrentUserPermissions(),
+  ]);
+
+  if (!property) notFound();
+
+  const t = await getTranslations("properties");
+  const canCreateLease =
+    can(permissions, "leases", "create") &&
+    LEASE_ELIGIBLE_TYPES.includes(property.location_type);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Link href="/properties" className="text-sm text-muted-foreground hover:underline">
+        ← {t("backToList")}
+      </Link>
+      <Card className="max-w-md">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle>{property.name}</CardTitle>
+          <Badge variant="secondary">
+            {t(STATUS_KEY[property.status as PropertyStatus] ?? "status")}
+          </Badge>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 text-sm">
+          <p className="text-muted-foreground">{property.address}</p>
+          <p>
+            {t("locationType")}:{" "}
+            {getPropertyTypeLabel(propertyTypes, property.location_type, t)}
+          </p>
+          <p>
+            {t("price")}: {property.price}
+          </p>
+        </CardContent>
+      </Card>
+      {canCreateLease && (
+        <Button
+          className="w-fit"
+          render={<Link href={`/properties/${property.id}/leases/new`} />}
+          nativeButton={false}
+        >
+          {t("createNewLease")}
+        </Button>
+      )}
+    </div>
+  );
+}

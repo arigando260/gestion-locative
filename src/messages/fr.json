@@ -1,0 +1,103 @@
+{
+  "common": {
+    "appName": "Gestion locative",
+    "create": "Créer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "loading": "Chargement...",
+    "back": "Retour"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "properties": "Biens",
+    "logout": "Déconnexion"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion..."
+  },
+  "properties": {
+    "title": "Biens",
+    "create": "Créer un bien",
+    "createTitle": "Créer un bien",
+    "name": "Nom",
+    "address": "Adresse",
+    "price": "Prix",
+    "status": "Statut",
+    "locationType": "Type de location",
+    "statusAvailable": "Disponible",
+    "statusOccupied": "Occupé",
+    "statusMaintenance": "En travaux",
+    "empty": "Aucun bien pour l'instant.",
+    "backToList": "Retour à la liste des biens",
+    "createSuccess": "Bien créé avec succès.",
+    "createNewLease": "Créer un bail",
+    "typeLongueDuree": "Longue durée",
+    "typeMeubleSimple": "Meublé simple",
+    "typeCourteDuree": "Courte durée"
+  },
+  "leases": {
+    "createTitle": "Créer un bail",
+    "tenant": "Locataire",
+    "noTenants": "Aucun locataire rattaché à cette organisation pour l'instant.",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "endDateHint": "Laissez vide pour une durée indéterminée.",
+    "rentAmount": "Montant du loyer (par période)",
+    "paymentFrequency": "Fréquence de paiement",
+    "frequencyMensuel": "Mensuel",
+    "frequencyTrimestriel": "Trimestriel",
+    "frequencySemestriel": "Semestriel",
+    "frequencyAnnuel": "Annuel",
+    "paymentTiming": "Mode de paiement",
+    "timingPrepaye": "Prépayé (échéance en début de période)",
+    "timingPostpaye": "Postpayé (échéance en fin de période)",
+    "securityDeposit": "Avance de garantie",
+    "utilityDeposit": "Caution eau/électricité",
+    "utilityDepositHint": "Laissez vide si aucune caution eau/électricité n'est demandée.",
+    "billingDay": "Jour de facturation fixe",
+    "billingDayHint": "Laissez vide pour aligner les échéances sur la date d'entrée.",
+    "createSuccess": "Bail créé avec succès.",
+    "viewSchedules": "Voir les échéances"
+  },
+  "schedules": {
+    "title": "Échéances",
+    "period": "Période",
+    "dueDate": "Échéance",
+    "amountDue": "Montant dû",
+    "status": "Statut",
+    "statusEnAttente": "En attente",
+    "statusPayee": "Payée",
+    "statusPartiellementPayee": "Partiellement payée",
+    "statusEnRetard": "En retard",
+    "statusAnnulee": "Annulée",
+    "partialBadge": "Raccordement",
+    "generate": "Générer les échéances",
+    "generateSuccess": "{count, plural, =0 {Aucune nouvelle échéance} one {# échéance générée} other {# échéances générées}}.",
+    "empty": "Aucune échéance pour l'instant.",
+    "recordPayment": "Enregistrer un paiement"
+  },
+  "payments": {
+    "formTitle": "Enregistrer un paiement",
+    "amount": "Montant",
+    "method": "Méthode",
+    "methodMobileMoney": "Mobile Money",
+    "methodCarte": "Carte",
+    "methodEspeces": "Espèces",
+    "methodVirement": "Virement",
+    "paymentDate": "Date du paiement",
+    "reference": "Référence externe",
+    "submit": "Enregistrer le paiement",
+    "success": "Paiement enregistré."
+  },
+  "errors": {
+    "uniqueViolation": "Cette donnée existe déjà.",
+    "foreignKeyViolation": "Action impossible : une donnée liée est manquante ou référencée ailleurs.",
+    "checkViolation": "Les données saisies ne respectent pas une contrainte requise.",
+    "permissionDenied": "Vous n'avez pas la permission d'effectuer cette action.",
+    "generic": "Une erreur inattendue est survenue. Réessayez."
+  }
+}
