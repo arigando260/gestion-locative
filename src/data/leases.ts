@@ -10,6 +10,41 @@ export type PaymentFrequency =
   | "annuel";
 export type PaymentTiming = "prepaye" | "postpaye";
 
+export type LeaseWithContext = Lease & {
+  properties: { name: string; address: string; location_type: string } | null;
+  organizations: { name: string } | null;
+};
+
+// Vue locataire : "toutes organisations confondues" (Module 1b), donc aucun
+// filtre d'organisation ici — RLS (tenant_account_id = auth.uid()) est la
+// seule chose qui restreint le résultat, pas cette fonction.
+export async function getMyLeases(): Promise<LeaseWithContext[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("leases")
+    .select("*, properties(name, address, location_type), organizations(name)")
+    .order("created_at", { ascending: false })
+    .returns<LeaseWithContext[]>();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getMyLease(id: string): Promise<LeaseWithContext | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("leases")
+    .select("*, properties(name, address, location_type), organizations(name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  // .returns<T>() n'enchaîne pas proprement avec .maybeSingle() dans cette
+  // version — même correctif d'inférence many-to-one qu'ailleurs, via un
+  // simple cast plutôt qu'un générique de requête.
+  return data as LeaseWithContext | null;
+}
+
 export async function getLease(id: string): Promise<Lease | null> {
   const supabase = await createClient();
   const { data, error } = await supabase

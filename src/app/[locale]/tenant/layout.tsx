@@ -4,7 +4,7 @@ import { getCurrentProfile, getCurrentTenant } from "@/data/session";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
-export default async function DashboardLayout({
+export default async function TenantLayout({
   children,
   params,
 }: {
@@ -13,38 +13,26 @@ export default async function DashboardLayout({
 }) {
   const { locale } = await params;
 
-  // Un même auth.users est soit staff (profiles) soit locataire
-  // (tenant_accounts), jamais les deux — ce groupe de routes est réservé au
-  // staff, on rebondit vers l'autre portail plutôt que de laisser RLS
-  // renvoyer des écrans vides silencieusement.
-  const profile = await getCurrentProfile();
-  if (!profile) {
-    const tenant = await getCurrentTenant();
-    redirect({ href: tenant ? "/tenant" : "/login", locale });
+  // Symétrique de (dashboard)/layout.tsx : ce segment est réservé aux
+  // comptes locataires, on rebondit vers l'autre portail sinon.
+  const tenant = await getCurrentTenant();
+  if (!tenant) {
+    const profile = await getCurrentProfile();
+    redirect({ href: profile ? "/dashboard" : "/login", locale });
     return null;
   }
 
-  const t = await getTranslations("nav");
+  const t = await getTranslations("tenant");
   const tc = await getTranslations("common");
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Une seule barre horizontale, pas de sidebar dédiée : le nombre de
-          liens (2-3 dans cette tranche) ne justifie pas encore un panneau
-          latéral distinct desktop/tiroir mobile — flex-wrap suffit à rester
-          lisible sur petit écran sans composant supplémentaire. */}
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <span className="text-sm font-semibold">{tc("appName")}</span>
           <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="hover:underline">
-              {t("dashboard")}
-            </Link>
-            <Link href="/properties" className="hover:underline">
-              {t("properties")}
-            </Link>
-            <Link href="/reservations" className="hover:underline">
-              {t("reservations")}
+            <Link href="/tenant" className="hover:underline">
+              {t("myLeases")}
             </Link>
           </nav>
         </div>

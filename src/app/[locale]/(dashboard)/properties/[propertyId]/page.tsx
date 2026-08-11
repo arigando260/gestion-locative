@@ -19,6 +19,7 @@ import {
 // Le trigger validate_lease_property_location_type le refuserait de toute
 // façon ; on évite juste de proposer une action vouée à échouer.
 const LEASE_ELIGIBLE_TYPES = ["longue_duree", "meuble_simple"];
+const RESERVATION_ELIGIBLE_TYPES = ["courte_duree"];
 
 const STATUS_KEY: Record<PropertyStatus, string> = {
   disponible: "statusAvailable",
@@ -39,9 +40,13 @@ export default async function PropertyPage({
   if (!property) notFound();
 
   const t = await getTranslations("properties");
+  const tr = await getTranslations("reservations");
   const canCreateLease =
     can(permissions, "leases", "create") &&
     LEASE_ELIGIBLE_TYPES.includes(property.location_type);
+  const canCreateReservation =
+    can(permissions, "reservations", "create") &&
+    RESERVATION_ELIGIBLE_TYPES.includes(property.location_type);
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,15 +71,27 @@ export default async function PropertyPage({
           </p>
         </CardContent>
       </Card>
-      {canCreateLease && (
-        <Button
-          className="w-fit"
-          render={<Link href={`/properties/${property.id}/leases/new`} />}
-          nativeButton={false}
-        >
-          {t("createNewLease")}
-        </Button>
-      )}
+      <div className="flex flex-wrap gap-2">
+        {canCreateLease && (
+          <Button
+            className="w-fit"
+            render={<Link href={`/properties/${property.id}/leases/new`} />}
+            nativeButton={false}
+          >
+            {t("createNewLease")}
+          </Button>
+        )}
+        {canCreateReservation && (
+          <Button
+            className="w-fit"
+            variant="outline"
+            render={<Link href={`/properties/${property.id}/reservations/new`} />}
+            nativeButton={false}
+          >
+            {tr("create")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

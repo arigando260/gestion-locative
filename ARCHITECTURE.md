@@ -53,3 +53,13 @@ Convention de nommage du slug : minuscules, séparé par des points, stable dans
 **Portée de cette convention** : uniquement les nouvelles exceptions. Les ~40 exceptions déjà écrites dans les Modules 1 à 6d restent en l'état ; elles seront reprises progressivement au fil des modules qui les touchent, pas en une passe dédiée. La dette est plafonnée à son niveau actuel, pas amenée à grandir.
 
 **Limite connue acceptée** : les messages métier restent en français quel que soit le paramètre de langue de l'utilisateur (ils sont écrits en dur dans le SQL). Seuls les messages génériques de `lib/errors.ts` et le reste de l'interface sont bilingues. Corriger ça pour de bon demanderait de faire porter un slug `DETAIL` à chaque exception (existante et future) et de déplacer le texte affiché dans les dictionnaires i18n — hors périmètre de cette tranche.
+
+## À purger avant toute mise en production réelle
+
+Ce projet s'est construit avec des comptes et mots de passe de démonstration créés au fil des modules, réutilisés pour chaque vérification empirique en navigateur. Rien de tout ça ne doit survivre au premier déploiement réel — liste tenue à jour à chaque fois qu'un nouvel élément de ce type apparaît, pour ne pas avoir à la reconstituer de mémoire le jour du lancement :
+
+- **`admin@demo.local`** (compte interne "Agence Demo") et son mot de passe, utilisés pour toutes les vérifications gestionnaire depuis le Module 1.
+- **Mot de passe connu posé sur un compte locataire existant** (`tenant-3c-...@demo.local`, réinitialisé via l'API Admin pour tester le portail locataire, tranche états des lieux/cautions/réservations) — le mot de passe d'origine (inconnu, généré à la création du compte) a été écrasé et n'est pas récupérable ; ce compte doit être désactivé ou son mot de passe régénéré avant production.
+- **Organisation "Org Test 6d"** (Module 6d) et **"Agence Demo"** elle-même : organisations de démonstration, pas des clientes réelles.
+- Les **4 biens protégés par un état des lieux finalisé** (Bien Gap Test, Bien M6 Gap ×2, Bien M6 Retest — voir historique de nettoyage) : non supprimables tant qu'un vrai mécanisme d'archivage n'existe pas (cf. décision Module 6d sur la désactivation d'organisation — on archive, on n'efface pas de donnée contractuelle). À traiter par ce futur mécanisme, pas par une suppression forcée.
+- Tout bien/bail/réservation dont le nom contient "Test" (ex: "Bien Test Inspections", "Bungalow Test Réservations") : artefacts de vérification manuelle, à nettoyer avant production comme les précédents (voir historique de nettoyage des Modules 5b/6).

@@ -19,11 +19,15 @@ export function SelectField({
   label,
   options,
   defaultValue,
+  onValueChange,
 }: {
   name: string;
   label: string;
   options: { value: string; label: string }[];
   defaultValue?: string;
+  // Optionnel : pour les formulaires où un champ conditionne l'affichage
+  // d'un autre (ex: catégorie d'imputation -> échéance à solder).
+  onValueChange?: (value: string) => void;
 }) {
   const [value, setValue] = useState(defaultValue ?? options[0]?.value ?? "");
 
@@ -37,6 +41,13 @@ export function SelectField({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options]);
+
+  // Notifie le parent à chaque changement (et au montage, pour la valeur
+  // par défaut) — utile uniquement aux formulaires avec champs dépendants.
+  useEffect(() => {
+    onValueChange?.(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   return (
     <div className="flex flex-col gap-1.5">

@@ -1,7 +1,23 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import type { Tables } from "@/lib/supabase/database.types";
 
+export type Payment = Tables<"payments">;
 export type PaymentMethod = "mobile_money" | "carte" | "especes" | "virement";
+
+// Historique de paiements d'un bail — réutilisé côté gestionnaire et côté
+// portail locataire (RLS restreint déjà ce dernier à ses propres baux).
+export async function getPaymentsForLease(leaseId: string): Promise<Payment[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .order("payment_date", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
 
 export type RecordPaymentInput = {
   organization_id: string;

@@ -19,3 +19,22 @@ export const getCurrentProfile = cache(async () => {
 
   return profile;
 });
+
+// Un même auth.users est soit dans profiles, soit dans tenant_accounts,
+// jamais les deux (trigger d'exclusivité, Module 1) — sert à déterminer
+// quel portail afficher (voir (dashboard)/layout.tsx et tenant/layout.tsx).
+export const getCurrentTenant = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: tenant } = await supabase
+    .from("tenant_accounts")
+    .select("id, email, full_name")
+    .eq("id", user.id)
+    .single();
+
+  return tenant;
+});
