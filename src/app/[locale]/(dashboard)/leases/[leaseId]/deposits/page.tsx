@@ -63,7 +63,7 @@ export default async function LeaseDepositsPage({
               <CardTitle className="text-base">{t("recordInitialDeposit")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <InitialDepositForm leaseId={lease.id} />
+              <InitialDepositForm leaseId={lease.id} lease={lease} balances={balances} />
             </CardContent>
           </Card>
           <Card>
@@ -79,7 +79,7 @@ export default async function LeaseDepositsPage({
               <CardTitle className="text-base">{t("recordRefund")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <RefundForm leaseId={lease.id} />
+              <RefundForm leaseId={lease.id} balances={balances} />
             </CardContent>
           </Card>
         </div>

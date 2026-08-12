@@ -168,7 +168,8 @@
     "advanceNotAuthorized": "Not authorized",
     "authorize": "Authorize",
     "revoke": "Revoke",
-    "authorizationUpdated": "Authorization updated."
+    "authorizationUpdated": "Authorization updated.",
+    "noBalanceAvailable": "No balance available to refund."
   },
   "inspections": {
     "title": "Property inspections",

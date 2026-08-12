@@ -168,7 +168,8 @@
     "advanceNotAuthorized": "Non autorisée",
     "authorize": "Autoriser",
     "revoke": "Révoquer",
-    "authorizationUpdated": "Autorisation mise à jour."
+    "authorizationUpdated": "Autorisation mise à jour.",
+    "noBalanceAvailable": "Aucun solde disponible à rembourser."
   },
   "inspections": {
     "title": "États des lieux",
