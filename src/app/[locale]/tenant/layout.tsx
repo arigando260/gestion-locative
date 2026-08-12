@@ -37,6 +37,9 @@ export default async function TenantLayout({
             <Link href="/tenant/maintenance" className="hover:underline">
               {t("maintenance")}
             </Link>
+            <Link href="/tenant/lease-terminations" className="hover:underline">
+              {t("leaseTerminations")}
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

@@ -17,11 +17,16 @@ const STATUS_KEY: Record<string, string> = {
   partiellement_payee: "statusPartiellementPayee",
   en_retard: "statusEnRetard",
   annulee: "statusAnnulee",
+  // Module 8 : période postérieure à la fin d'un bail non-actif (resilie/
+  // termine), calculée à la volée par private.payment_schedule_effective_status
+  // — jamais une donnée écrite en base.
+  hors_periode: "statusHorsPeriode",
 };
 
-const STATUS_VARIANT: Record<string, "secondary" | "destructive" | "default"> = {
+const STATUS_VARIANT: Record<string, "secondary" | "destructive" | "default" | "outline"> = {
   payee: "default",
   en_retard: "destructive",
+  hors_periode: "outline",
 };
 
 export async function ScheduleTable({
