@@ -13,6 +13,7 @@
     "reservations": "Réservations",
     "maintenance": "Maintenance",
     "leaseTerminations": "Résiliations",
+    "settings": "Paramètres",
     "logout": "Déconnexion"
   },
   "auth": {
@@ -97,7 +98,11 @@
     "submit": "Enregistrer le paiement",
     "success": "Paiement enregistré.",
     "history": "Historique des paiements",
-    "empty": "Aucun paiement pour l'instant."
+    "empty": "Aucun paiement pour l'instant.",
+    "receipt": "Reçu",
+    "downloadReceipt": "Télécharger le reçu",
+    "generatingReceipt": "Génération...",
+    "receiptNotReady": "Le reçu n'est pas encore disponible."
   },
   "reservations": {
     "title": "Réservations",
@@ -307,6 +312,23 @@
     "viewPendingRequest": "Voir la demande en cours",
     "depositDisclaimerTitle": "À noter",
     "depositDisclaimer": "Cette résiliation n'affecte pas automatiquement le calcul du remboursement de la caution. Ce calcul dépend de l'état des lieux de sortie et des imputations enregistrées, qui restent des étapes séparées et postérieures."
+  },
+  "settings": {
+    "title": "Paramètres de l'organisation",
+    "name": "Nom",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "email": "Email",
+    "updateSuccess": "Coordonnées mises à jour."
+  },
+  "billing": {
+    "invoicesTitle": "Factures",
+    "generateInvoice": "Générer la facture",
+    "invoiceGenerated": "Facture générée avec succès.",
+    "noInvoices": "Aucune facture émise pour l'instant.",
+    "invoiceGeneratedOn": "Émise le",
+    "downloadInvoice": "Télécharger",
+    "preparingDownload": "Préparation..."
   },
   "errors": {
     "uniqueViolation": "Cette donnée existe déjà.",

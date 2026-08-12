@@ -13,6 +13,7 @@
     "reservations": "Reservations",
     "maintenance": "Maintenance",
     "leaseTerminations": "Terminations",
+    "settings": "Settings",
     "logout": "Log out"
   },
   "auth": {
@@ -96,6 +97,10 @@
     "reference": "External reference",
     "submit": "Record payment",
     "success": "Payment recorded.",
+    "receipt": "Receipt",
+    "downloadReceipt": "Download receipt",
+    "generatingReceipt": "Generating...",
+    "receiptNotReady": "The receipt is not available yet.",
     "history": "Payment history",
     "empty": "No payments yet."
   },
@@ -307,6 +312,23 @@
     "viewPendingRequest": "View pending request",
     "depositDisclaimerTitle": "Please note",
     "depositDisclaimer": "This termination does not automatically affect the security deposit refund calculation. That calculation depends on the move-out inspection and recorded deposit charges, which remain separate, later steps."
+  },
+  "settings": {
+    "title": "Organization settings",
+    "name": "Name",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "updateSuccess": "Details updated."
+  },
+  "billing": {
+    "invoicesTitle": "Invoices",
+    "generateInvoice": "Generate invoice",
+    "invoiceGenerated": "Invoice generated successfully.",
+    "noInvoices": "No invoices issued yet.",
+    "invoiceGeneratedOn": "Issued on",
+    "downloadInvoice": "Download",
+    "preparingDownload": "Preparing..."
   },
   "errors": {
     "uniqueViolation": "This entry already exists.",

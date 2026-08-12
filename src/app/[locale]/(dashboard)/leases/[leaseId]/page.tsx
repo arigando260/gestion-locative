@@ -5,11 +5,14 @@ import { getLease } from "@/data/leases";
 import { getProperty } from "@/data/properties";
 import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
+import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
 import { PaymentForm } from "@/components/leases/payment-form";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
+import { InvoiceGenerateForm } from "@/components/billing/invoice-generate-form";
+import { InvoiceList } from "@/components/billing/invoice-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -20,10 +23,11 @@ export default async function LeasePage({
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
-  const [property, schedules, payments, permissions] = await Promise.all([
+  const [property, schedules, payments, invoices, permissions] = await Promise.all([
     getProperty(lease.property_id),
     getSchedulesForLease(leaseId),
     getPaymentsForLease(leaseId),
+    getScheduleInvoicesForLease(leaseId),
     getCurrentUserPermissions(),
   ]);
 
@@ -32,6 +36,7 @@ export default async function LeasePage({
   const tp = await getTranslations("payments");
   const ti = await getTranslations("inspections");
   const td = await getTranslations("deposits");
+  const tb = await getTranslations("billing");
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,7 +102,15 @@ export default async function LeasePage({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{tp("history")}</h2>
-        <PaymentHistoryTable payments={payments} />
+        <PaymentHistoryTable payments={payments} variant="staff" />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{tb("invoicesTitle")}</h2>
+        {can(permissions, "schedule_invoices", "create") && (
+          <InvoiceGenerateForm leaseId={lease.id} schedules={schedules} />
+        )}
+        <InvoiceList invoices={invoices} />
       </div>
     </div>
   );

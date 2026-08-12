@@ -5,9 +5,11 @@ import { getMyLease } from "@/data/leases";
 import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getDepositBalancesForLease } from "@/data/deposits";
+import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
 import { DepositBalanceCards } from "@/components/leases/deposit-balance-cards";
+import { InvoiceList } from "@/components/billing/invoice-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -18,10 +20,11 @@ export default async function TenantLeaseDetailPage({
   const lease = await getMyLease(leaseId);
   if (!lease) notFound();
 
-  const [schedules, payments, deposits] = await Promise.all([
+  const [schedules, payments, deposits, invoices] = await Promise.all([
     getSchedulesForLease(leaseId),
     getPaymentsForLease(leaseId),
     getDepositBalancesForLease(leaseId),
+    getScheduleInvoicesForLease(leaseId),
   ]);
 
   const t = await getTranslations("leases");
@@ -29,6 +32,7 @@ export default async function TenantLeaseDetailPage({
   const tp = await getTranslations("payments");
   const td = await getTranslations("deposits");
   const ti = await getTranslations("inspections");
+  const tb = await getTranslations("billing");
   const tc = await getTranslations("common");
 
   return (
@@ -66,7 +70,12 @@ export default async function TenantLeaseDetailPage({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{tp("history")}</h2>
-        <PaymentHistoryTable payments={payments} />
+        <PaymentHistoryTable payments={payments} variant="tenant" />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{tb("invoicesTitle")}</h2>
+        <InvoiceList invoices={invoices} />
       </div>
 
       <div className="flex flex-col gap-3">

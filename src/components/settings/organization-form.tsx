@@ -1,0 +1,39 @@
+"use client";
+
+import { useActionState } from "react";
+import { useTranslations } from "next-intl";
+import { updateOrganizationAction } from "@/actions/organizations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/forms/submit-button";
+import { FormMessage } from "@/components/forms/form-message";
+import type { Organization } from "@/data/organizations";
+
+export function OrganizationForm({ organization }: { organization: Organization }) {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
+  const [state, formAction] = useActionState(updateOrganizationAction, null);
+
+  return (
+    <form action={formAction} className="flex max-w-md flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="name">{t("name")}</Label>
+        <Input id="name" name="name" defaultValue={organization.name} required />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="address">{t("address")}</Label>
+        <Input id="address" name="address" defaultValue={organization.address ?? ""} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="phone">{t("phone")}</Label>
+        <Input id="phone" name="phone" defaultValue={organization.phone ?? ""} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email">{t("email")}</Label>
+        <Input id="email" name="email" type="email" defaultValue={organization.email ?? ""} />
+      </div>
+      <FormMessage state={state} />
+      <SubmitButton pendingText={tc("loading")}>{tc("save")}</SubmitButton>
+    </form>
+  );
+}

@@ -8,6 +8,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { DocumentDownloadButton } from "@/components/billing/document-download-button";
+import {
+  getOrGeneratePaymentReceiptUrlAction,
+  getTenantPaymentReceiptUrlAction,
+} from "@/actions/payment-receipts";
 import type { Payment } from "@/data/payments";
 
 const METHOD_KEY: Record<string, string> = {
@@ -17,12 +22,39 @@ const METHOD_KEY: Record<string, string> = {
   virement: "methodVirement",
 };
 
-export async function PaymentHistoryTable({ payments }: { payments: Payment[] }) {
+// Partagée staff/locataire (comme ScheduleTable) : seule la variante change
+// quelle Server Action le bouton reçu appelle — génère à la volée si besoin
+// côté staff (getOrGeneratePaymentReceiptUrlAction), jamais côté locataire
+// (getTenantPaymentReceiptUrlAction, Module 9). Rendue serveur malgré le
+// bouton interactif : seul DocumentDownloadButton est un composant client,
+// même principe que SubmitButton dans le reste du projet.
+export async function PaymentHistoryTable({
+  payments,
+  variant,
+}: {
+  payments: Payment[];
+  variant: "staff" | "tenant";
+}) {
   const t = await getTranslations("payments");
 
   if (payments.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
+
+  const receiptButton = (payment: Payment) => {
+    if (payment.status !== "confirme") return null;
+    const action =
+      variant === "staff"
+        ? getOrGeneratePaymentReceiptUrlAction.bind(null, payment.id)
+        : getTenantPaymentReceiptUrlAction.bind(null, payment.id);
+    return (
+      <DocumentDownloadButton
+        action={action}
+        label={t("downloadReceipt")}
+        pendingLabel={t("generatingReceipt")}
+      />
+    );
+  };
 
   return (
     <>
@@ -34,6 +66,7 @@ export async function PaymentHistoryTable({ payments }: { payments: Payment[] })
               <TableHead>{t("amount")}</TableHead>
               <TableHead>{t("method")}</TableHead>
               <TableHead>{t("reference")}</TableHead>
+              <TableHead>{t("receipt")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -43,6 +76,7 @@ export async function PaymentHistoryTable({ payments }: { payments: Payment[] })
                 <TableCell>{payment.amount}</TableCell>
                 <TableCell>{t(METHOD_KEY[payment.method] ?? "methodEspeces")}</TableCell>
                 <TableCell>{payment.external_reference ?? "—"}</TableCell>
+                <TableCell>{receiptButton(payment)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -59,6 +93,7 @@ export async function PaymentHistoryTable({ payments }: { payments: Payment[] })
               <span className="text-sm text-muted-foreground">
                 {t(METHOD_KEY[payment.method] ?? "methodEspeces")}
               </span>
+              {receiptButton(payment)}
             </CardContent>
           </Card>
         ))}
