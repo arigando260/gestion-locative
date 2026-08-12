@@ -57,6 +57,22 @@ export async function getLease(id: string): Promise<Lease | null> {
   return data;
 }
 
+// Une seule ligne possible (leases_one_active_per_property, Module 3) —
+// utilisé uniquement pour proposer un lien direct depuis la fiche bien vers
+// son bail actif, quand il en existe un.
+export async function getActiveLeaseForProperty(propertyId: string): Promise<{ id: string } | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("leases")
+    .select("id")
+    .eq("property_id", propertyId)
+    .eq("status", "actif")
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 // Locataires ayant une adhésion ACTIVE avec l'organisation courante (RLS sur
 // tenant_organization_memberships s'applique déjà : ne renvoie que ceux de
 // l'organisation de l'appelant). Pas de gestion de locataires dans cette

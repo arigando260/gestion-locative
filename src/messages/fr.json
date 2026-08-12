@@ -39,6 +39,7 @@
     "backToList": "Retour à la liste des biens",
     "createSuccess": "Bien créé avec succès.",
     "createNewLease": "Créer un bail",
+    "viewActiveLease": "Voir le bail actif",
     "typeLongueDuree": "Longue durée",
     "typeMeubleSimple": "Meublé simple",
     "typeCourteDuree": "Courte durée"

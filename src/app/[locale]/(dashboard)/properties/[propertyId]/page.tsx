@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getPropertyWithEffectiveStatus, type PropertyStatus } from "@/data/properties";
+import { getActiveLeaseForProperty } from "@/data/leases";
 import { getPropertyTypes } from "@/data/property-types";
 import { getPropertyTypeLabel } from "@/lib/property-type-labels";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
@@ -31,10 +32,11 @@ export default async function PropertyPage({
   params,
 }: PageProps<"/[locale]/properties/[propertyId]">) {
   const { propertyId } = await params;
-  const [property, propertyTypes, permissions] = await Promise.all([
+  const [property, propertyTypes, permissions, activeLease] = await Promise.all([
     getPropertyWithEffectiveStatus(propertyId),
     getPropertyTypes(),
     getCurrentUserPermissions(),
+    getActiveLeaseForProperty(propertyId),
   ]);
 
   if (!property) notFound();
@@ -72,6 +74,16 @@ export default async function PropertyPage({
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-2">
+        {activeLease && (
+          <Button
+            className="w-fit"
+            variant="outline"
+            render={<Link href={`/leases/${activeLease.id}`} />}
+            nativeButton={false}
+          >
+            {t("viewActiveLease")}
+          </Button>
+        )}
         {canCreateLease && (
           <Button
             className="w-fit"

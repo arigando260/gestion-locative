@@ -39,6 +39,7 @@
     "backToList": "Back to properties",
     "createSuccess": "Property created successfully.",
     "createNewLease": "Create a lease",
+    "viewActiveLease": "View active lease",
     "typeLongueDuree": "Long-term",
     "typeMeubleSimple": "Furnished short-term",
     "typeCourteDuree": "Short-term"
