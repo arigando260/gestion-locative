@@ -66,7 +66,14 @@
     "billingDay": "Fixed billing day",
     "billingDayHint": "Leave empty to align schedules with the move-in date.",
     "createSuccess": "Lease created successfully.",
-    "viewSchedules": "View schedules"
+    "viewSchedules": "View schedules",
+    "tenantCaptureLabel": "Tenant self-capture of inspections",
+    "tenantCaptureInherit": "Inherits organization setting",
+    "tenantCaptureAllowed": "Allowed",
+    "tenantCaptureNotAllowed": "Not allowed",
+    "tenantCaptureEffective": "Effective setting",
+    "tenantCaptureInheritedHint": "inherited from the organization",
+    "tenantCaptureUpdated": "Setting updated."
   },
   "schedules": {
     "title": "Schedules",
@@ -321,6 +328,8 @@
     "address": "Address",
     "phone": "Phone",
     "email": "Email",
+    "tenantCaptureLabel": "Allow tenants to capture their own move-in/move-out inspections by default",
+    "tenantCaptureHint": "Default setting for all leases — can be overridden individually on each lease's page.",
     "updateSuccess": "Details updated."
   },
   "billing": {

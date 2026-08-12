@@ -32,6 +32,18 @@ export function OrganizationForm({ organization }: { organization: Organization 
         <Label htmlFor="email">{t("email")}</Label>
         <Input id="email" name="email" type="email" defaultValue={organization.email ?? ""} />
       </div>
+      <Label htmlFor="tenant_capture_enabled" className="flex items-center gap-2 font-normal">
+        <input
+          type="checkbox"
+          id="tenant_capture_enabled"
+          name="tenant_capture_enabled"
+          value="true"
+          defaultChecked={organization.tenant_capture_enabled}
+          className="size-4"
+        />
+        <span>{t("tenantCaptureLabel")}</span>
+      </Label>
+      <p className="text-sm text-muted-foreground">{t("tenantCaptureHint")}</p>
       <FormMessage state={state} />
       <SubmitButton pendingText={tc("loading")}>{tc("save")}</SubmitButton>
     </form>

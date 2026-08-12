@@ -66,7 +66,14 @@
     "billingDay": "Jour de facturation fixe",
     "billingDayHint": "Laissez vide pour aligner les échéances sur la date d'entrée.",
     "createSuccess": "Bail créé avec succès.",
-    "viewSchedules": "Voir les échéances"
+    "viewSchedules": "Voir les échéances",
+    "tenantCaptureLabel": "Capture des états des lieux par le locataire",
+    "tenantCaptureInherit": "Hérite du réglage organisation",
+    "tenantCaptureAllowed": "Autorisée",
+    "tenantCaptureNotAllowed": "Non autorisée",
+    "tenantCaptureEffective": "Réglage effectif",
+    "tenantCaptureInheritedHint": "hérité de l'organisation",
+    "tenantCaptureUpdated": "Réglage mis à jour."
   },
   "schedules": {
     "title": "Échéances",
@@ -321,6 +328,8 @@
     "address": "Adresse",
     "phone": "Téléphone",
     "email": "Email",
+    "tenantCaptureLabel": "Autoriser les locataires à capturer eux-mêmes leurs états des lieux par défaut",
+    "tenantCaptureHint": "Réglage par défaut pour tous les baux — modifiable individuellement sur la fiche de chaque bail.",
     "updateSuccess": "Coordonnées mises à jour."
   },
   "billing": {

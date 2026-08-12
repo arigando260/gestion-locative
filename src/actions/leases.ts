@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/data/session";
-import { createLease } from "@/data/leases";
+import { createLease, updateLeaseTenantCapture } from "@/data/leases";
 import { toUserMessage } from "@/lib/errors";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { getTranslations } from "next-intl/server";
 import type { ActionState } from "./properties";
 
 export async function createLeaseAction(
@@ -68,4 +69,37 @@ export async function createLeaseAction(
     locale: (formData.get("locale") as string) ?? routing.defaultLocale,
   });
   return null;
+}
+
+const TENANT_CAPTURE_VALUE: Record<string, boolean | null> = {
+  inherit: null,
+  true: true,
+  false: false,
+};
+
+export async function updateLeaseTenantCaptureAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const raw = String(formData.get("tenant_capture_enabled") ?? "inherit");
+
+  if (!lease_id || !(raw in TENANT_CAPTURE_VALUE)) {
+    return { success: false, message: "Bail introuvable." };
+  }
+
+  const { error } = await updateLeaseTenantCapture(lease_id, TENANT_CAPTURE_VALUE[raw]);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}`);
+  const t = await getTranslations("leases");
+  return { success: true, message: t("tenantCaptureUpdated") };
 }

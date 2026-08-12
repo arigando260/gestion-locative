@@ -29,6 +29,7 @@ export type UpdateOrganizationInput = {
   address: string | null;
   phone: string | null;
   email: string | null;
+  tenant_capture_enabled: boolean;
 };
 
 // Écriture : {data, error} renvoyé tel quel, jamais throw — la Server Action

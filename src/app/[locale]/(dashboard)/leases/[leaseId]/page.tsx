@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getProperty } from "@/data/properties";
+import { getOrganization } from "@/data/organizations";
 import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
@@ -11,6 +12,7 @@ import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
 import { PaymentForm } from "@/components/leases/payment-form";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
+import { TenantCaptureToggle } from "@/components/leases/tenant-capture-toggle";
 import { InvoiceGenerateForm } from "@/components/billing/invoice-generate-form";
 import { InvoiceList } from "@/components/billing/invoice-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +25,9 @@ export default async function LeasePage({
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
-  const [property, schedules, payments, invoices, permissions] = await Promise.all([
+  const [property, organization, schedules, payments, invoices, permissions] = await Promise.all([
     getProperty(lease.property_id),
+    getOrganization(lease.organization_id),
     getSchedulesForLease(leaseId),
     getPaymentsForLease(leaseId),
     getScheduleInvoicesForLease(leaseId),
@@ -85,6 +88,21 @@ export default async function LeasePage({
           </p>
         </CardContent>
       </Card>
+
+      {can(permissions, "leases", "update") && organization && (
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-base">{t("tenantCaptureLabel")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TenantCaptureToggle
+              leaseId={lease.id}
+              leaseValue={lease.tenant_capture_enabled}
+              organizationDefault={organization.tenant_capture_enabled}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">

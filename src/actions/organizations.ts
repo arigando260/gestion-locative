@@ -23,6 +23,8 @@ export async function updateOrganizationAction(
   const address = String(formData.get("address") ?? "").trim() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const email = String(formData.get("email") ?? "").trim() || null;
+  // Case à cocher HTML : absente de FormData quand décochée, jamais "false".
+  const tenant_capture_enabled = formData.get("tenant_capture_enabled") === "true";
 
   if (!name) {
     return { success: false, message: "Merci de remplir tous les champs." };
@@ -33,6 +35,7 @@ export async function updateOrganizationAction(
     address,
     phone,
     email,
+    tenant_capture_enabled,
   });
 
   if (error) {

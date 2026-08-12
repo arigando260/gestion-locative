@@ -117,6 +117,21 @@ export async function getLeasesForOrg(): Promise<LeaseOption[]> {
   return data;
 }
 
+// null = hérite du réglage organisation (Module 6) — même principe que les
+// heures standard du Module 4b. Champ unique, écrit à part plutôt que via
+// un futur updateLease générique : même discipline que
+// setAdvanceConsumptionAuthorized (Module 3c/5), qui reste elle aussi une
+// fonction dédiée à un seul champ plutôt qu'un update générique sur leases.
+export async function updateLeaseTenantCapture(leaseId: string, value: boolean | null) {
+  const supabase = await createClient();
+  return supabase
+    .from("leases")
+    .update({ tenant_capture_enabled: value })
+    .eq("id", leaseId)
+    .select()
+    .single();
+}
+
 export type CreateLeaseInput = Pick<
   TablesInsert<"leases">,
   | "organization_id"
