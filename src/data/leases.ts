@@ -83,6 +83,24 @@ export async function getTenantsForOrg(): Promise<TenantOption[]> {
     .filter((t): t is TenantOption => t !== null);
 }
 
+// Baux de l'organisation courante, toutes propriétés confondues — utilisé
+// par le formulaire de création de ticket de maintenance pour filtrer les
+// baux selon le bien choisi côté client, sans aller-retour supplémentaire.
+// RLS (is_internal + organization_id = current_org_id()) scope déjà à
+// l'organisation, comme getProperties().
+export type LeaseOption = Pick<Lease, "id" | "property_id" | "status" | "start_date">;
+
+export async function getLeasesForOrg(): Promise<LeaseOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("leases")
+    .select("id, property_id, status, start_date")
+    .order("start_date", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
 export type CreateLeaseInput = Pick<
   TablesInsert<"leases">,
   | "organization_id"

@@ -56,3 +56,13 @@ export function buildInspectionPhotoPath(
 ): string {
   return `${organizationId}/${inspectionId}/${inspectionItemId}/${crypto.randomUUID()}.jpg`;
 }
+
+// Chemin à 2 niveaux (pas de notion d'"item" côté maintenance, contrairement
+// aux états des lieux) : {organization_id}/{maintenance_ticket_id}/{uuid}.jpg
+// — voir supabase/migrations/20260805160000_module7_maintenance_tickets.sql.
+export function buildMaintenanceTicketPhotoPath(
+  organizationId: string,
+  maintenanceTicketId: string
+): string {
+  return `${organizationId}/${maintenanceTicketId}/${crypto.randomUUID()}.jpg`;
+}

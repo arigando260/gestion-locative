@@ -46,6 +46,9 @@ export default async function DashboardLayout({
             <Link href="/reservations" className="hover:underline">
               {t("reservations")}
             </Link>
+            <Link href="/maintenance" className="hover:underline">
+              {t("maintenance")}
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">
