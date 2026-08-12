@@ -45,7 +45,8 @@ export default async function PropertyPage({
   const tr = await getTranslations("reservations");
   const canCreateLease =
     can(permissions, "leases", "create") &&
-    LEASE_ELIGIBLE_TYPES.includes(property.location_type);
+    LEASE_ELIGIBLE_TYPES.includes(property.location_type) &&
+    !activeLease;
   const canCreateReservation =
     can(permissions, "reservations", "create") &&
     RESERVATION_ELIGIBLE_TYPES.includes(property.location_type);
