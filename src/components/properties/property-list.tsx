@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Property, PropertyStatus } from "@/data/properties";
+import type { PropertyWithEffectiveStatus, PropertyStatus } from "@/data/properties";
 import { getPropertyTypeLabel, type PropertyType } from "@/lib/property-type-labels";
 
 const STATUS_KEY: Record<PropertyStatus, string> = {
@@ -23,7 +23,7 @@ export async function PropertyList({
   properties,
   propertyTypes,
 }: {
-  properties: Property[];
+  properties: PropertyWithEffectiveStatus[];
   propertyTypes: PropertyType[];
 }) {
   const t = await getTranslations("properties");
@@ -67,7 +67,7 @@ export async function PropertyList({
                 <TableCell>{property.price}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">
-                    {t(STATUS_KEY[property.status as PropertyStatus] ?? "status")}
+                    {t(STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -83,7 +83,7 @@ export async function PropertyList({
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{property.name}</span>
                   <Badge variant="secondary">
-                    {t(STATUS_KEY[property.status as PropertyStatus] ?? "status")}
+                    {t(STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">

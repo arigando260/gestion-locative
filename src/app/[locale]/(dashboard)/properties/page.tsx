@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getProperties } from "@/data/properties";
+import { getPropertiesWithEffectiveStatus } from "@/data/properties";
 import { getPropertyTypes } from "@/data/property-types";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { PropertyList } from "@/components/properties/property-list";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function PropertiesPage() {
   const [properties, propertyTypes, permissions] = await Promise.all([
-    getProperties(),
+    getPropertiesWithEffectiveStatus(),
     getPropertyTypes(),
     getCurrentUserPermissions(),
   ]);

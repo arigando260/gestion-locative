@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getProperty, type PropertyStatus } from "@/data/properties";
+import { getPropertyWithEffectiveStatus, type PropertyStatus } from "@/data/properties";
 import { getPropertyTypes } from "@/data/property-types";
 import { getPropertyTypeLabel } from "@/lib/property-type-labels";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
@@ -32,7 +32,7 @@ export default async function PropertyPage({
 }: PageProps<"/[locale]/properties/[propertyId]">) {
   const { propertyId } = await params;
   const [property, propertyTypes, permissions] = await Promise.all([
-    getProperty(propertyId),
+    getPropertyWithEffectiveStatus(propertyId),
     getPropertyTypes(),
     getCurrentUserPermissions(),
   ]);
@@ -57,7 +57,7 @@ export default async function PropertyPage({
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>{property.name}</CardTitle>
           <Badge variant="secondary">
-            {t(STATUS_KEY[property.status as PropertyStatus] ?? "status")}
+            {t(STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
           </Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
