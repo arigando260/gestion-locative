@@ -332,6 +332,11 @@
     "tenantCaptureHint": "Default setting for all leases — can be overridden individually on each lease's page.",
     "updateSuccess": "Details updated."
   },
+  "dashboard": {
+    "lowCoverageTitle": "Leases with insufficient schedule coverage",
+    "lowCoverageUntil": "Covered until {date}",
+    "lowCoverageNoSchedule": "No schedule generated yet"
+  },
   "billing": {
     "invoicesTitle": "Invoices",
     "generateInvoice": "Generate invoice",

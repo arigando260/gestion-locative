@@ -332,6 +332,11 @@
     "tenantCaptureHint": "Réglage par défaut pour tous les baux — modifiable individuellement sur la fiche de chaque bail.",
     "updateSuccess": "Coordonnées mises à jour."
   },
+  "dashboard": {
+    "lowCoverageTitle": "Baux à échéances insuffisantes",
+    "lowCoverageUntil": "Couverture jusqu'au {date}",
+    "lowCoverageNoSchedule": "Aucune échéance générée"
+  },
   "billing": {
     "invoicesTitle": "Factures",
     "generateInvoice": "Générer la facture",

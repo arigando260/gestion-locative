@@ -45,3 +45,50 @@ export async function generateSchedulesForLease(leaseId: string) {
     p_lease_id: leaseId,
   });
 }
+
+export type LeaseScheduleCoverage = Tables<"leases_schedule_coverage">;
+
+// Seuil "couverture faible" partagé par l'extension silencieuse (fiche
+// bail) et le bloc d'alertes (tableau de bord) — Module 5c. Une seule
+// définition du seuil, pas une par appelant.
+const LOW_COVERAGE_HORIZON_MONTHS = 2;
+
+export function scheduleCoverageThresholdDate(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + LOW_COVERAGE_HORIZON_MONTHS);
+  return d.toISOString().slice(0, 10);
+}
+
+export async function getLeaseScheduleCoverage(
+  leaseId: string
+): Promise<LeaseScheduleCoverage | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("leases_schedule_coverage")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+// Un seul aller-retour, pas de boucle par bail : le filtre (organisation +
+// actif + couverture sous le seuil) est appliqué côté base sur la vue
+// leases_schedule_coverage (Module 5c).
+export async function getLeasesWithLowScheduleCoverage(
+  organizationId: string
+): Promise<LeaseScheduleCoverage[]> {
+  const supabase = await createClient();
+  const threshold = scheduleCoverageThresholdDate();
+  const { data, error } = await supabase
+    .from("leases_schedule_coverage")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("status", "actif")
+    .or(`coverage_end_date.is.null,coverage_end_date.lt.${threshold}`)
+    .order("coverage_end_date", { ascending: true, nullsFirst: true });
+
+  if (error) throw error;
+  return data;
+}

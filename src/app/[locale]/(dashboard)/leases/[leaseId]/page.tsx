@@ -4,7 +4,12 @@ import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getProperty } from "@/data/properties";
 import { getOrganization } from "@/data/organizations";
-import { getSchedulesForLease } from "@/data/schedules";
+import {
+  getSchedulesForLease,
+  getLeaseScheduleCoverage,
+  scheduleCoverageThresholdDate,
+  generateSchedulesForLease,
+} from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
@@ -24,6 +29,30 @@ export default async function LeasePage({
   const { leaseId } = await params;
   const lease = await getLease(leaseId);
   if (!lease) notFound();
+
+  // Extension silencieuse de la couverture d'échéances (Module 5c) : best-
+  // effort, avant le rendu, jamais bloquant — le bouton manuel "Générer les
+  // échéances" reste disponible en secours si cet appel échoue.
+  if (lease.status === "actif") {
+    const coverage = await getLeaseScheduleCoverage(lease.id);
+    if (coverage) {
+      const threshold = scheduleCoverageThresholdDate();
+      const stillRoomToGrow =
+        lease.end_date === null ||
+        coverage.coverage_end_date === null ||
+        coverage.coverage_end_date < lease.end_date;
+      const lowCoverage =
+        coverage.coverage_end_date === null ||
+        coverage.coverage_end_date < threshold;
+      if (stillRoomToGrow && lowCoverage) {
+        try {
+          await generateSchedulesForLease(lease.id);
+        } catch {
+          // Best-effort, voir commentaire ci-dessus.
+        }
+      }
+    }
+  }
 
   const [property, organization, schedules, payments, invoices, permissions] = await Promise.all([
     getProperty(lease.property_id),

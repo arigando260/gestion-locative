@@ -1100,6 +1100,42 @@ export type Database = {
           },
         ]
       }
+      leases_schedule_coverage: {
+        Row: {
+          coverage_end_date: string | null
+          lease_end_date: string | null
+          lease_id: string | null
+          organization_id: string | null
+          property_id: string | null
+          property_name: string | null
+          status: string | null
+          tenant_account_id: string | null
+          tenant_full_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "leases_tenant_org_fk"
+            columns: ["organization_id", "tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
       my_permissions: {
         Row: {
           action: string | null
