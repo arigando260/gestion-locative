@@ -89,6 +89,8 @@
     "depositsIncomplete": "Deposits incomplete",
     "awaitingTenantApproval": "Awaiting tenant approval.",
     "myContractTitle": "My contract",
+    "acknowledgeContractLabel": "I acknowledge that I have read and understood the terms of this contract",
+    "mustViewContractBeforeApprove": "Review your contract before approving it, to make sure of what you're approving.",
     "approveContract": "Approve my contract",
     "contractApproved": "Contract approved, lease activated.",
     "depositsIncompleteTenantHint": "Approval will be possible once the initial deposits are fully paid.",

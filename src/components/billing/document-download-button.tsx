@@ -15,10 +15,15 @@ export function DocumentDownloadButton({
   action,
   label,
   pendingLabel,
+  onSuccess,
 }: {
   action: () => Promise<DocumentUrlResult>;
   label: string;
   pendingLabel: string;
+  // Optionnel : notifie le parent qu'une URL a bien été ouverte (ex:
+  // lease-contract-approval-panel.tsx, qui en dépend pour son état "déjà
+  // consulté"). Reçus et factures n'en ont pas besoin, ne leur ajoute rien.
+  onSuccess?: () => void;
 }) {
   const tc = useTranslations("common");
   const [pending, startTransition] = useTransition();
@@ -30,6 +35,7 @@ export function DocumentDownloadButton({
       const result = await action();
       if (result.success && result.url) {
         window.open(result.url, "_blank", "noopener,noreferrer");
+        onSuccess?.();
       } else {
         setError(result.message ?? tc("loading"));
       }

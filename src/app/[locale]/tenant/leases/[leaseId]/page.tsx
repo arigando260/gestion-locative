@@ -6,11 +6,13 @@ import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getDepositBalancesForLease } from "@/data/deposits";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
-import { getLeaseActivationReadiness } from "@/data/lease-contracts";
+import { getLeaseActivationReadiness, getLeaseContractByLeaseId } from "@/data/lease-contracts";
+import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
 import { DepositBalanceCards } from "@/components/leases/deposit-balance-cards";
 import { InvoiceList } from "@/components/billing/invoice-list";
+import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { LeaseContractApproval } from "@/components/tenant/lease-contract-approval";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,12 +41,13 @@ export default async function TenantLeaseDetailPage({
   const lease = await getMyLease(leaseId);
   if (!lease) notFound();
 
-  const [schedules, payments, deposits, invoices, activationReadiness] = await Promise.all([
+  const [schedules, payments, deposits, invoices, activationReadiness, leaseContract] = await Promise.all([
     getSchedulesForLease(leaseId),
     getPaymentsForLease(leaseId),
     getDepositBalancesForLease(leaseId),
     getScheduleInvoicesForLease(leaseId),
     lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
+    lease.status !== "brouillon" ? getLeaseContractByLeaseId(leaseId) : Promise.resolve(null),
   ]);
 
   const t = await getTranslations("leases");
@@ -79,6 +82,14 @@ export default async function TenantLeaseDetailPage({
 
       {lease.status === "brouillon" && (
         <LeaseContractApproval leaseId={lease.id} readiness={activationReadiness} />
+      )}
+
+      {lease.status !== "brouillon" && leaseContract && (
+        <DocumentDownloadButton
+          action={getOrGenerateLeaseContractUrlAction.bind(null, lease.id)}
+          label={t("viewContract")}
+          pendingLabel={t("generatingContract")}
+        />
       )}
 
       <Button

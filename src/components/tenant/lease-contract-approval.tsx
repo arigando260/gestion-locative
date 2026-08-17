@@ -1,8 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DocumentDownloadButton } from "@/components/billing/document-download-button";
-import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
-import { ApproveLeaseContractForm } from "./approve-lease-contract-form";
+import { LeaseContractApprovalPanel } from "./lease-contract-approval-panel";
 import type { LeaseActivationReadiness } from "@/data/lease-contracts";
 
 // Affichée uniquement sur la fiche d'un bail 'brouillon' (voir
@@ -32,16 +30,11 @@ export async function LeaseContractApproval({
         <CardTitle>{t("myContractTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <DocumentDownloadButton
-          action={getOrGenerateLeaseContractUrlAction.bind(null, leaseId)}
-          label={t("viewContract")}
-          pendingLabel={t("generatingContract")}
+        <LeaseContractApprovalPanel
+          leaseId={leaseId}
+          depositsComplete={depositsComplete}
+          initiallyViewed={readiness?.contract_first_viewed_at != null}
         />
-        {depositsComplete ? (
-          <ApproveLeaseContractForm leaseId={leaseId} />
-        ) : (
-          <p className="text-sm text-muted-foreground">{t("depositsIncompleteTenantHint")}</p>
-        )}
       </CardContent>
     </Card>
   );

@@ -89,6 +89,8 @@
     "depositsIncomplete": "Dépôts incomplets",
     "awaitingTenantApproval": "En attente de l'approbation du locataire.",
     "myContractTitle": "Mon contrat",
+    "acknowledgeContractLabel": "Je reconnais avoir lu et compris les termes de ce contrat",
+    "mustViewContractBeforeApprove": "Consultez votre contrat avant de l'approuver, pour être sûr de ce que vous approuvez.",
     "approveContract": "Approuver mon contrat",
     "contractApproved": "Contrat approuvé, bail activé.",
     "depositsIncompleteTenantHint": "L'approbation sera possible une fois les dépôts initiaux intégralement versés.",

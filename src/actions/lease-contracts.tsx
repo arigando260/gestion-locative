@@ -8,6 +8,7 @@ import {
   getLeaseContractRenderData,
   getSignedLeaseContractUrl,
   createLeaseContractRecord,
+  markLeaseContractViewedByTenant,
   approveLeaseContract,
 } from "@/data/lease-contracts";
 import { createClient } from "@/lib/supabase/server";
@@ -40,6 +41,12 @@ export async function getOrGenerateLeaseContractUrlAction(
 
   const existing = await getLeaseContractByLeaseId(leaseId);
   if (existing) {
+    // Best-effort : ne bloque jamais le téléchargement si l'écriture
+    // échoue, jamais le staff (Module 10f — la vraie garantie est le
+    // trigger d'approbation, pas cette pose côté lecture).
+    if (tenant) {
+      await markLeaseContractViewedByTenant(existing.id).catch(() => {});
+    }
     try {
       const url = await getSignedLeaseContractUrl(existing.storage_path);
       return { success: true, url };
@@ -93,7 +100,7 @@ export async function getOrGenerateLeaseContractUrlAction(
     return { success: false, message: "Échec de la génération du contrat. Réessayez." };
   }
 
-  const { error: insertError } = await createLeaseContractRecord({
+  const { data: newContract, error: insertError } = await createLeaseContractRecord({
     organization_id: renderData.organizationId,
     lease_id: leaseId,
     storage_path: storagePath,
@@ -105,6 +112,10 @@ export async function getOrGenerateLeaseContractUrlAction(
 
   revalidatePath(`/leases/${leaseId}`);
   revalidatePath(`/tenant/leases/${leaseId}`);
+
+  if (tenant && newContract) {
+    await markLeaseContractViewedByTenant(newContract.id).catch(() => {});
+  }
 
   try {
     const url = await getSignedLeaseContractUrl(storagePath);

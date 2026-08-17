@@ -14,7 +14,8 @@ import {
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { getDepositBalancesForLease } from "@/data/deposits";
-import { getLeaseActivationReadiness } from "@/data/lease-contracts";
+import { getLeaseActivationReadiness, getLeaseContractByLeaseId } from "@/data/lease-contracts";
+import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
 import { getInspection } from "@/data/inspections";
 import {
   getLeaseClosureStatus,
@@ -33,6 +34,7 @@ import { LeaseSpecialTermsForm } from "@/components/leases/lease-special-terms-f
 import { DeleteLeaseButton } from "@/components/leases/delete-lease-button";
 import { InvoiceGenerateForm } from "@/components/billing/invoice-generate-form";
 import { InvoiceList } from "@/components/billing/invoice-list";
+import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,6 +93,7 @@ export default async function LeasePage({
     activationReadiness,
     depositBalances,
     closureStatus,
+    leaseContract,
   ] = await Promise.all([
     getProperty(lease.property_id),
     getOrganization(lease.organization_id),
@@ -101,6 +104,7 @@ export default async function LeasePage({
     lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
     lease.status === "brouillon" ? getDepositBalancesForLease(leaseId) : Promise.resolve([]),
     lease.status === "actif" || lease.status === "resilie" ? getLeaseClosureStatus(leaseId) : Promise.resolve(null),
+    lease.status !== "brouillon" ? getLeaseContractByLeaseId(leaseId) : Promise.resolve(null),
   ]);
 
   // Séquentiel, dépend du résultat ci-dessus (id de l'état des lieux) —
@@ -181,6 +185,14 @@ export default async function LeasePage({
 
       {lease.status === "brouillon" && can(permissions, "leases", "delete") && (
         <DeleteLeaseButton leaseId={lease.id} propertyId={lease.property_id} />
+      )}
+
+      {lease.status !== "brouillon" && leaseContract && (
+        <DocumentDownloadButton
+          action={getOrGenerateLeaseContractUrlAction.bind(null, lease.id)}
+          label={t("viewContract")}
+          pendingLabel={t("generatingContract")}
+        />
       )}
 
       {closureStatus && can(permissions, "leases", "update") && (

@@ -12,6 +12,7 @@ export type LeaseContract = {
   storage_path: string;
   generated_at: string;
   approved_at: string | null;
+  first_viewed_at: string | null;
 };
 
 export type LeaseActivationReadiness = {
@@ -23,6 +24,7 @@ export type LeaseActivationReadiness = {
   contract_storage_path: string | null;
   contract_generated_at: string | null;
   contract_approved_at: string | null;
+  contract_first_viewed_at: string | null;
 };
 
 // Partagée staff/locataire : RLS (lease_contracts_select, Module 10)
@@ -153,7 +155,23 @@ export type CreateLeaseContractInput = {
 
 export async function createLeaseContractRecord(input: CreateLeaseContractInput) {
   const supabase = await createClient();
-  return supabase.from("lease_contracts").insert(input).select().single();
+  return supabase.from("lease_contracts").insert(input).select("id").single();
+}
+
+// Posé une seule fois, uniquement par l'appelant locataire (jamais le
+// staff — voir actions/lease-contracts.tsx) : la clause WHERE rend cette
+// mise à jour naturellement idempotente, une reconsultation n'écrase
+// jamais la première valeur (Module 10f). La vraie garantie reste le
+// trigger private.activate_lease_on_contract_approval, qui refuse
+// l'approbation tant que cette colonne est NULL — cette fonction ne fait
+// que la poser, jamais l'authorité elle-même.
+export async function markLeaseContractViewedByTenant(contractId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("lease_contracts")
+    .update({ first_viewed_at: new Date().toISOString() })
+    .eq("id", contractId)
+    .is("first_viewed_at", null);
 }
 
 // Le passage de leases.status à 'actif' est appliqué par le trigger security
