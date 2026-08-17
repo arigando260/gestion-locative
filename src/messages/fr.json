@@ -90,7 +90,26 @@
     "myContractTitle": "Mon contrat",
     "approveContract": "Approuver mon contrat",
     "contractApproved": "Contrat approuvé, bail activé.",
-    "depositsIncompleteTenantHint": "L'approbation sera possible une fois les dépôts initiaux intégralement versés."
+    "depositsIncompleteTenantHint": "L'approbation sera possible une fois les dépôts initiaux intégralement versés.",
+    "endDateUpdated": "Date de fin mise à jour.",
+    "leaseEndingBanner": "Ce bail se termine le {date}.",
+    "leaseEndingBannerNoDate": "Ce bail approche de sa fin.",
+    "renewLease": "Renouveler",
+    "startClosure": "Enclencher la clôture",
+    "keysReturnedBanner": "Restitution des clés à enregistrer pour ce bail.",
+    "keysReturnedAtLabel": "Date de restitution des clés",
+    "recordKeysReturned": "Enregistrer la restitution des clés",
+    "keysReturnedRecorded": "Restitution des clés enregistrée.",
+    "exitInspectionDueBanner": "État des lieux de sortie à réaliser avant le {date}.",
+    "exitInspectionDueBannerNoDate": "État des lieux de sortie à réaliser.",
+    "createExitInspection": "Créer l'état des lieux de sortie",
+    "readyToCloseBanner": "État des lieux de sortie finalisé — le bail peut être clôturé.",
+    "closeLeaseButton": "Clôturer définitivement le bail",
+    "leaseClosed": "Bail clôturé définitivement.",
+    "specialTermsLabel": "Clauses particulières (spécifiques à ce bail)",
+    "specialTermsHint": "Laissez vide pour utiliser le règlement par défaut de l'organisation.",
+    "specialTermsUpdated": "Clauses particulières mises à jour.",
+    "deleteDraft": "Supprimer ce brouillon"
   },
   "schedules": {
     "title": "Échéances",
@@ -348,12 +367,20 @@
     "email": "Email",
     "tenantCaptureLabel": "Autoriser les locataires à capturer eux-mêmes leurs états des lieux par défaut",
     "tenantCaptureHint": "Réglage par défaut pour tous les baux — modifiable individuellement sur la fiche de chaque bail.",
+    "specialTermsLabel": "Règlement intérieur / clauses par défaut",
+    "specialTermsHint": "Utilisé pour tout bail qui ne définit pas ses propres clauses particulières.",
     "updateSuccess": "Coordonnées mises à jour."
   },
   "dashboard": {
     "lowCoverageTitle": "Baux à échéances insuffisantes",
     "lowCoverageUntil": "Couverture jusqu'au {date}",
-    "lowCoverageNoSchedule": "Aucune échéance générée"
+    "lowCoverageNoSchedule": "Aucune échéance générée",
+    "upcomingEndDateTitle": "Baux arrivant à échéance",
+    "upcomingEndDateUntil": "Fin de bail le {date}",
+    "closurePendingTitle": "Clôtures en cours",
+    "closurePendingKeysNeeded": "Restitution des clés à enregistrer",
+    "closurePendingInspectionNeeded": "État des lieux de sortie à réaliser avant le {date}",
+    "closurePendingReady": "Prêt à clôturer"
   },
   "billing": {
     "invoicesTitle": "Factures",

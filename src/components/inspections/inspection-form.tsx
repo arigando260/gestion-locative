@@ -10,7 +10,17 @@ import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
 import { useLocale } from "next-intl";
 
-export function InspectionForm({ leaseId }: { leaseId: string }) {
+export function InspectionForm({
+  leaseId,
+  defaultType,
+}: {
+  leaseId: string;
+  // Présélection depuis un lien direct (ex: bandeau de clôture, Module 10
+  // Volet C — "?type=sortie") — une valeur absente/invalide laisse le
+  // champ sur son comportement normal (voir SelectField, premier
+  // élément par défaut).
+  defaultType?: "entree" | "sortie";
+}) {
   const t = useTranslations("inspections");
   const tc = useTranslations("common");
   const locale = useLocale();
@@ -23,6 +33,7 @@ export function InspectionForm({ leaseId }: { leaseId: string }) {
       <SelectField
         name="inspection_type"
         label={t("type")}
+        defaultValue={defaultType}
         options={[
           { value: "entree", label: t("typeEntree") },
           { value: "sortie", label: t("typeSortie") },

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { updateOrganizationAction } from "@/actions/organizations";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
@@ -31,6 +32,16 @@ export function OrganizationForm({ organization }: { organization: Organization 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">{t("email")}</Label>
         <Input id="email" name="email" type="email" defaultValue={organization.email ?? ""} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="special_terms">{t("specialTermsLabel")}</Label>
+        <Textarea
+          id="special_terms"
+          name="special_terms"
+          rows={4}
+          defaultValue={organization.special_terms ?? ""}
+        />
+        <p className="text-sm text-muted-foreground">{t("specialTermsHint")}</p>
       </div>
       <Label htmlFor="tenant_capture_enabled" className="flex items-center gap-2 font-normal">
         <input

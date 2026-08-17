@@ -2,7 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/data/session";
-import { createLease, updateLeaseTenantCapture } from "@/data/leases";
+import {
+  createLease,
+  updateLeaseTenantCapture,
+  updateLeaseEndDate,
+  recordKeysReturned,
+  closeLeaseDefinitively,
+  updateLeaseSpecialTerms,
+  deleteLease,
+} from "@/data/leases";
+import { generateSchedulesForLease } from "@/data/schedules";
 import { toUserMessage } from "@/lib/errors";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -102,4 +111,169 @@ export async function updateLeaseTenantCaptureAction(
   revalidatePath(`/leases/${lease_id}`);
   const t = await getTranslations("leases");
   return { success: true, message: t("tenantCaptureUpdated") };
+}
+
+// Volet B (Module 10) — "renouveler" : end_date vide = durée indéterminée,
+// même convention que createLeaseAction ci-dessus.
+export async function updateLeaseEndDateAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const endDateRaw = String(formData.get("end_date") ?? "").trim();
+
+  if (!lease_id) {
+    return { success: false, message: "Bail introuvable." };
+  }
+
+  const { error } = await updateLeaseEndDate(lease_id, endDateRaw || null);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  // Complète immédiatement la couverture d'échéances jusqu'à la nouvelle
+  // end_date — ne plus attendre le rendu suivant de la fiche bail (Module
+  // 5c). Best-effort, même principe que l'extension silencieuse : la mise
+  // à jour de end_date est déjà acquise à ce stade, un échec de génération
+  // ne doit jamais l'invalider ni bloquer le message de succès.
+  try {
+    await generateSchedulesForLease(lease_id);
+  } catch {
+    // Best-effort, voir commentaire ci-dessus.
+  }
+
+  revalidatePath(`/leases/${lease_id}`);
+  revalidatePath("/dashboard");
+  const t = await getTranslations("leases");
+  return { success: true, message: t("endDateUpdated") };
+}
+
+// Volet C (Module 10), étape 1 — restitution des clés.
+export async function recordKeysReturnedAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const date = String(formData.get("keys_returned_at") ?? "").trim();
+
+  if (!lease_id || !date) {
+    return { success: false, message: "Merci de renseigner une date." };
+  }
+
+  const { error } = await recordKeysReturned(lease_id, date);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}`);
+  revalidatePath("/dashboard");
+  const t = await getTranslations("leases");
+  return { success: true, message: t("keysReturnedRecorded") };
+}
+
+// Volet C (Module 10), étape finale — clôture définitive. Aucun champ à
+// valider ici : le trigger de garde (Module 10) revérifie lui-même
+// keys_returned_at + état des lieux de sortie finalisé et renvoie un
+// message métier clair (P0001) si la condition n'est plus remplie entre
+// l'affichage du bouton et le clic.
+export async function closeLeaseDefinitivelyAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  if (!lease_id) {
+    return { success: false, message: "Bail introuvable." };
+  }
+
+  const { error } = await closeLeaseDefinitively(lease_id);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}`);
+  revalidatePath("/dashboard");
+  const t = await getTranslations("leases");
+  return { success: true, message: t("leaseClosed") };
+}
+
+// Clauses particulières (Module 10d) — override par bail, vide = retour à
+// l'héritage du réglage organisation (résolu côté application, jamais ici).
+export async function updateLeaseSpecialTermsAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const specialTermsRaw = String(formData.get("special_terms") ?? "").trim();
+
+  if (!lease_id) {
+    return { success: false, message: "Bail introuvable." };
+  }
+
+  const { error } = await updateLeaseSpecialTerms(lease_id, specialTermsRaw || null);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}`);
+  const t = await getTranslations("leases");
+  return { success: true, message: t("specialTermsUpdated") };
+}
+
+// Mécanisme de refus de contrat (Module 10) — visible uniquement pour un
+// bail 'brouillon' (voir page). Le message d'erreur (dépôts déjà versés :
+// lease.delete.has_deposit_history) remonte tel quel via toUserMessage,
+// jamais un échec silencieux.
+export async function deleteLeaseAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const property_id = String(formData.get("property_id") ?? "");
+
+  if (!lease_id) {
+    return { success: false, message: "Bail introuvable." };
+  }
+
+  const { error } = await deleteLease(lease_id);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath("/dashboard");
+  if (property_id) revalidatePath(`/properties/${property_id}`);
+  redirect({
+    href: property_id ? `/properties/${property_id}` : "/dashboard",
+    locale: (formData.get("locale") as string) ?? routing.defaultLocale,
+  });
+  return null;
 }

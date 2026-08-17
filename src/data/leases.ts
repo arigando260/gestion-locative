@@ -2,7 +2,10 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables, TablesInsert } from "@/lib/supabase/database.types";
 
-export type Lease = Tables<"leases">;
+// special_terms : colonne du Module 10d, absente de database.types.ts tant
+// que `supabase gen types` n'a pas été rejoué — même remarque que
+// data/organizations.ts. Étend le type généré plutôt que de le réécrire.
+export type Lease = Tables<"leases"> & { special_terms: string | null };
 export type PaymentFrequency =
   | "mensuel"
   | "trimestriel"
@@ -54,7 +57,7 @@ export async function getLease(id: string): Promise<Lease | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data as Lease | null;
 }
 
 // Une seule ligne possible (leases_one_pending_or_active_per_property,
@@ -153,4 +156,73 @@ export type CreateLeaseInput = Pick<
 export async function createLease(input: CreateLeaseInput) {
   const supabase = await createClient();
   return supabase.from("leases").insert(input).select().single();
+}
+
+// ----------------------------------------------------------------------------
+// Module 10, Volets B/C — trois écritures dédiées, un seul champ à la fois
+// chacune (même discipline que updateLeaseTenantCapture ci-dessus) : le
+// garde-fou de transition (Module 10) et la règle métier de clôture
+// (keys_returned_at + état des lieux de sortie finalisé) sont déjà portés
+// par la base, ces fonctions ne font que relayer l'écriture.
+// ----------------------------------------------------------------------------
+
+// Volet B — "renouveler" : simple UPDATE de end_date sur un bail actif, déjà
+// couvert par la contrainte leases_end_after_start existante (Module 3).
+export async function updateLeaseEndDate(leaseId: string, endDate: string | null) {
+  const supabase = await createClient();
+  return supabase
+    .from("leases")
+    .update({ end_date: endDate })
+    .eq("id", leaseId)
+    .select()
+    .single();
+}
+
+// Volet C, étape 1 — restitution des clés (Module 6, jusqu'ici inaccessible
+// depuis aucun écran, voir diagnostic Module 10).
+export async function recordKeysReturned(leaseId: string, date: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("leases")
+    .update({ keys_returned_at: date })
+    .eq("id", leaseId)
+    .select()
+    .single();
+}
+
+// Volet C, étape finale — clôture définitive. Le trigger de garde (Module
+// 10) revérifie lui-même keys_returned_at + état des lieux de sortie
+// finalisé ; cette fonction ne fait que relayer la transition, jamais un
+// geste automatique ou silencieux (toujours un clic staff explicite).
+export async function closeLeaseDefinitively(leaseId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("leases")
+    .update({ status: "termine" })
+    .eq("id", leaseId)
+    .select()
+    .single();
+}
+
+// Clauses particulières (Module 10d) — override par bail, NULL = hérite du
+// réglage organisation (résolution faite côté application, jamais en base
+// — voir data/lease-contracts.ts).
+export async function updateLeaseSpecialTerms(leaseId: string, specialTerms: string | null) {
+  const supabase = await createClient();
+  return supabase
+    .from("leases")
+    .update({ special_terms: specialTerms })
+    .eq("id", leaseId)
+    .select()
+    .single();
+}
+
+// Refus de contrat (Module 10) : la seule garde est déjà en base
+// (trg_leases_prevent_delete_with_deposit_history — refuse avec un
+// message P0001 clair si deposit_ledger n'est pas vide pour ce bail,
+// jamais un 23503 brut). Rien à revérifier ici, l'erreur remonte telle
+// quelle via toUserMessage (voir actions/leases.ts).
+export async function deleteLease(leaseId: string) {
+  const supabase = await createClient();
+  return supabase.from("leases").delete().eq("id", leaseId);
 }

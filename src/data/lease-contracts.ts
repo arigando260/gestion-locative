@@ -78,6 +78,10 @@ export type LeaseContractRenderData = {
   utilityDepositAmount: number | null;
   startDate: string;
   endDate: string | null;
+  // Résolution Module 10d : le bail prime s'il définit ses propres clauses,
+  // sinon celles de l'organisation, sinon aucune section dans le PDF —
+  // calculée ici, jamais en base (voir migration 20260805270000).
+  specialTerms: string | null;
 };
 
 // Rassemble tout ce qu'il faut pour générer le PDF du contrat — même
@@ -90,7 +94,7 @@ export async function getLeaseContractRenderData(
   const { data: lease, error } = await supabase
     .from("leases")
     .select(
-      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, organizations(name, address, phone, email), properties(name, address)"
+      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, special_terms, organizations(name, address, phone, email, special_terms), properties(name, address)"
     )
     .eq("id", leaseId)
     .maybeSingle();
@@ -108,7 +112,14 @@ export async function getLeaseContractRenderData(
     utility_deposit_amount: number | null;
     start_date: string;
     end_date: string | null;
-    organizations: { name: string; address: string | null; phone: string | null; email: string | null } | null;
+    special_terms: string | null;
+    organizations: {
+      name: string;
+      address: string | null;
+      phone: string | null;
+      email: string | null;
+      special_terms: string | null;
+    } | null;
     properties: { name: string; address: string } | null;
   };
 
@@ -130,6 +141,7 @@ export async function getLeaseContractRenderData(
     utilityDepositAmount: row.utility_deposit_amount,
     startDate: row.start_date,
     endDate: row.end_date,
+    specialTerms: row.special_terms ?? row.organizations?.special_terms ?? null,
   };
 }
 

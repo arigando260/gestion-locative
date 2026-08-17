@@ -48,6 +48,23 @@ export async function generateSchedulesForLease(leaseId: string) {
 
 export type LeaseScheduleCoverage = Tables<"leases_schedule_coverage">;
 
+// Un bail à durée déterminée dont la couverture déjà générée atteint (ou
+// dépasse) sa date de fin n'a plus rien à générer — ni l'extension
+// silencieuse (fiche bail) ni l'alerte dashboard ne doivent le traiter
+// comme "à compléter". Une seule définition, réutilisée aux deux endroits
+// plutôt que dupliquée (auparavant inline sur leases/[leaseId]/page.tsx
+// sous le nom stillRoomToGrow, absente de getLeasesWithLowScheduleCoverage).
+export function hasRoomToGrowSchedules(
+  leaseEndDate: string | null,
+  coverageEndDate: string | null
+): boolean {
+  return (
+    leaseEndDate === null ||
+    coverageEndDate === null ||
+    coverageEndDate < leaseEndDate
+  );
+}
+
 // Seuil "couverture faible" partagé par l'extension silencieuse (fiche
 // bail) et le bloc d'alertes (tableau de bord) — Module 5c. Une seule
 // définition du seuil, pas une par appelant.
@@ -75,7 +92,11 @@ export async function getLeaseScheduleCoverage(
 
 // Un seul aller-retour, pas de boucle par bail : le filtre (organisation +
 // actif + couverture sous le seuil) est appliqué côté base sur la vue
-// leases_schedule_coverage (Module 5c).
+// leases_schedule_coverage (Module 5c). "Room to grow" (Module 10) filtré
+// côté application : PostgREST ne sait pas comparer deux colonnes entre
+// elles (coverage_end_date < lease_end_date) dans un filtre .or(), seul un
+// littéral est possible côté requête — même limite déjà contournée ainsi
+// sur la fiche bail.
 export async function getLeasesWithLowScheduleCoverage(
   organizationId: string
 ): Promise<LeaseScheduleCoverage[]> {
@@ -90,5 +111,7 @@ export async function getLeasesWithLowScheduleCoverage(
     .order("coverage_end_date", { ascending: true, nullsFirst: true });
 
   if (error) throw error;
-  return data;
+  return data.filter((lease) =>
+    hasRoomToGrowSchedules(lease.lease_end_date, lease.coverage_end_date)
+  );
 }

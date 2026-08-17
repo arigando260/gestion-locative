@@ -9,11 +9,18 @@ import {
   getLeaseScheduleCoverage,
   scheduleCoverageThresholdDate,
   generateSchedulesForLease,
+  hasRoomToGrowSchedules,
 } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { getDepositBalancesForLease } from "@/data/deposits";
 import { getLeaseActivationReadiness } from "@/data/lease-contracts";
+import { getInspection } from "@/data/inspections";
+import {
+  getLeaseClosureStatus,
+  isLeaseClosureEngaged,
+  leaseEndApproachingThresholdDate,
+} from "@/data/lease-closure";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
@@ -21,6 +28,9 @@ import { PaymentForm } from "@/components/leases/payment-form";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
 import { TenantCaptureToggle } from "@/components/leases/tenant-capture-toggle";
 import { LeaseActivationPanel } from "@/components/leases/lease-activation-panel";
+import { LeaseLifecycleBanner } from "@/components/leases/lease-lifecycle-banner";
+import { LeaseSpecialTermsForm } from "@/components/leases/lease-special-terms-form";
+import { DeleteLeaseButton } from "@/components/leases/delete-lease-button";
 import { InvoiceGenerateForm } from "@/components/billing/invoice-generate-form";
 import { InvoiceList } from "@/components/billing/invoice-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,14 +68,10 @@ export default async function LeasePage({
     const coverage = await getLeaseScheduleCoverage(lease.id);
     if (coverage) {
       const threshold = scheduleCoverageThresholdDate();
-      const stillRoomToGrow =
-        lease.end_date === null ||
-        coverage.coverage_end_date === null ||
-        coverage.coverage_end_date < lease.end_date;
       const lowCoverage =
         coverage.coverage_end_date === null ||
         coverage.coverage_end_date < threshold;
-      if (stillRoomToGrow && lowCoverage) {
+      if (hasRoomToGrowSchedules(lease.end_date, coverage.coverage_end_date) && lowCoverage) {
         try {
           await generateSchedulesForLease(lease.id);
         } catch {
@@ -75,17 +81,33 @@ export default async function LeasePage({
     }
   }
 
-  const [property, organization, schedules, payments, invoices, permissions, activationReadiness, depositBalances] =
-    await Promise.all([
-      getProperty(lease.property_id),
-      getOrganization(lease.organization_id),
-      getSchedulesForLease(leaseId),
-      getPaymentsForLease(leaseId),
-      getScheduleInvoicesForLease(leaseId),
-      getCurrentUserPermissions(),
-      lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
-      lease.status === "brouillon" ? getDepositBalancesForLease(leaseId) : Promise.resolve([]),
-    ]);
+  const [
+    property,
+    organization,
+    schedules,
+    payments,
+    invoices,
+    permissions,
+    activationReadiness,
+    depositBalances,
+    closureStatus,
+  ] = await Promise.all([
+    getProperty(lease.property_id),
+    getOrganization(lease.organization_id),
+    getSchedulesForLease(leaseId),
+    getPaymentsForLease(leaseId),
+    getScheduleInvoicesForLease(leaseId),
+    getCurrentUserPermissions(),
+    lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
+    lease.status === "brouillon" ? getDepositBalancesForLease(leaseId) : Promise.resolve([]),
+    lease.status === "actif" || lease.status === "resilie" ? getLeaseClosureStatus(leaseId) : Promise.resolve(null),
+  ]);
+
+  // Séquentiel, dépend du résultat ci-dessus (id de l'état des lieux) —
+  // uniquement pertinent quand le bandeau "prêt à clôturer" va s'afficher.
+  const exitInspectionValidationStatus = closureStatus?.latest_finalized_exit_inspection_id
+    ? ((await getInspection(closureStatus.latest_finalized_exit_inspection_id))?.effective_validation_status ?? null)
+    : null;
 
   const t = await getTranslations("leases");
   const ts = await getTranslations("schedules");
@@ -157,6 +179,26 @@ export default async function LeasePage({
         />
       )}
 
+      {lease.status === "brouillon" && can(permissions, "leases", "delete") && (
+        <DeleteLeaseButton leaseId={lease.id} propertyId={lease.property_id} />
+      )}
+
+      {closureStatus && can(permissions, "leases", "update") && (
+        <LeaseLifecycleBanner
+          leaseId={lease.id}
+          closureEngaged={isLeaseClosureEngaged(closureStatus)}
+          endDateApproaching={
+            closureStatus.lease_end_date !== null &&
+            closureStatus.lease_end_date <= leaseEndApproachingThresholdDate()
+          }
+          endDate={closureStatus.lease_end_date}
+          keysReturnedAt={closureStatus.keys_returned_at}
+          exitInspectionDueDate={closureStatus.exit_inspection_due_date}
+          exitInspectionDone={closureStatus.exit_inspection_done}
+          exitInspectionValidationStatus={exitInspectionValidationStatus}
+        />
+      )}
+
       {can(permissions, "leases", "update") && organization && (
         <Card className="max-w-md">
           <CardHeader>
@@ -168,6 +210,17 @@ export default async function LeasePage({
               leaseValue={lease.tenant_capture_enabled}
               organizationDefault={organization.tenant_capture_enabled}
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {can(permissions, "leases", "update") && (
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-base">{t("specialTermsLabel")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LeaseSpecialTermsForm leaseId={lease.id} specialTerms={lease.special_terms} />
           </CardContent>
         </Card>
       )}

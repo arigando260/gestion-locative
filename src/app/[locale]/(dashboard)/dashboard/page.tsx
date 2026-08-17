@@ -2,8 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/data/session";
-import { getCurrentUserPermissions, can } from "@/data/permissions";
-import { getLeasesWithLowScheduleCoverage } from "@/data/schedules";
+import { getCurrentUserPermissions } from "@/data/permissions";
+import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,10 +33,21 @@ export default async function DashboardPage({
     getCurrentUserPermissions(),
   ]);
 
-  const canReadSchedules = can(permissions, "payment_schedules", "read");
-  const lowCoverageLeases = canReadSchedules
-    ? await getLeasesWithLowScheduleCoverage(profile.organization_id)
-    : [];
+  // Source unique du bloc d'alertes (Module 10) — chaque nouvelle catégorie
+  // s'ajoute dans data/dashboard-alerts.ts, jamais en dupliquant un fetch de
+  // plus ici. Cette page ne fait que grouper par "kind" pour l'affichage.
+  const alerts = await getDashboardAlerts(profile.organization_id, permissions);
+  const lowCoverage = alerts.filter(
+    (a): a is Extract<DashboardAlert, { kind: "low_coverage" }> => a.kind === "low_coverage"
+  );
+  const endApproaching = alerts.filter(
+    (a): a is Extract<DashboardAlert, { kind: "lease_end_approaching" }> =>
+      a.kind === "lease_end_approaching"
+  );
+  const closurePending = alerts.filter(
+    (a): a is Extract<DashboardAlert, { kind: "lease_closure_pending" }> =>
+      a.kind === "lease_closure_pending"
+  );
 
   const t = await getTranslations("nav");
   const tp = await getTranslations("properties");
@@ -44,25 +55,76 @@ export default async function DashboardPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      {lowCoverageLeases.length > 0 && (
+      {lowCoverage.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{td("lowCoverageTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {lowCoverageLeases.map((lease) => (
+            {lowCoverage.map((alert) => (
               <Link
-                key={lease.lease_id}
-                href={`/leases/${lease.lease_id}`}
+                key={alert.leaseId}
+                href={`/leases/${alert.leaseId}`}
                 className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
               >
                 <span className="font-medium">
-                  {lease.property_name} — {lease.tenant_full_name}
+                  {alert.propertyName} — {alert.tenantName}
                 </span>
                 <span className="text-muted-foreground">
-                  {lease.coverage_end_date
-                    ? td("lowCoverageUntil", { date: lease.coverage_end_date })
+                  {alert.coverageEndDate
+                    ? td("lowCoverageUntil", { date: alert.coverageEndDate })
                     : td("lowCoverageNoSchedule")}
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {endApproaching.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{td("upcomingEndDateTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {endApproaching.map((alert) => (
+              <Link
+                key={alert.leaseId}
+                href={`/leases/${alert.leaseId}`}
+                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
+              >
+                <span className="font-medium">
+                  {alert.propertyName} — {alert.tenantName}
+                </span>
+                <span className="text-muted-foreground">
+                  {td("upcomingEndDateUntil", { date: alert.endDate })}
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {closurePending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{td("closurePendingTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {closurePending.map((alert) => (
+              <Link
+                key={alert.leaseId}
+                href={`/leases/${alert.leaseId}`}
+                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
+              >
+                <span className="font-medium">
+                  {alert.propertyName} — {alert.tenantName}
+                </span>
+                <span className="text-muted-foreground">
+                  {alert.subKind === "keys_needed" && td("closurePendingKeysNeeded")}
+                  {alert.subKind === "inspection_needed" &&
+                    td("closurePendingInspectionNeeded", { date: alert.dueDate ?? "—" })}
+                  {alert.subKind === "ready" && td("closurePendingReady")}
                 </span>
               </Link>
             ))}

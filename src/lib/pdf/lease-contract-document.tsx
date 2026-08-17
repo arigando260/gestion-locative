@@ -16,6 +16,9 @@ export type LeaseContractDocumentData = {
   paymentFrequencyLabel: string;
   securityDepositAmount: string;
   utilityDepositAmount: string | null;
+  // Déjà résolu (bail > organisation > rien) côté data/lease-contracts.ts —
+  // ce composant ne fait qu'afficher, jamais de logique de repli ici.
+  specialTerms: string | null;
 };
 
 // Contenu minimal demandé (Module 10, Volet A) : coordonnées organisation
@@ -67,6 +70,21 @@ export function LeaseContractDocument({ data }: { data: LeaseContractDocumentDat
           <View style={documentStyles.section}>
             <Text style={documentStyles.sectionLabel}>Caution eau/électricité</Text>
             <Text style={documentStyles.sectionValue}>{data.utilityDepositAmount}</Text>
+          </View>
+        )}
+
+        {data.specialTerms !== null && (
+          <View style={documentStyles.section}>
+            <Text style={documentStyles.sectionLabel}>Clauses particulières</Text>
+            {data.specialTerms
+              .split("\n")
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0)
+              .map((line, index) => (
+                <Text key={index} style={documentStyles.sectionValue}>
+                  {line}
+                </Text>
+              ))}
           </View>
         )}
 

@@ -2,14 +2,16 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
 
-// address/phone/email : colonnes du Module 9, absentes de database.types.ts
-// tant que `supabase gen types` n'a pas été rejoué — même remarque que
-// data/maintenance.ts. Étend le type généré plutôt que de le réécrire en
-// entier, le reste de la table étant déjà correctement typé.
+// address/phone/email (Module 9) + special_terms (Module 10d) : colonnes
+// absentes de database.types.ts tant que `supabase gen types` n'a pas été
+// rejoué — même remarque que data/maintenance.ts. Étend le type généré
+// plutôt que de le réécrire en entier, le reste de la table étant déjà
+// correctement typé.
 export type Organization = Tables<"organizations"> & {
   address: string | null;
   phone: string | null;
   email: string | null;
+  special_terms: string | null;
 };
 
 export async function getOrganization(id: string): Promise<Organization | null> {
@@ -30,6 +32,7 @@ export type UpdateOrganizationInput = {
   phone: string | null;
   email: string | null;
   tenant_capture_enabled: boolean;
+  special_terms: string | null;
 };
 
 // Écriture : {data, error} renvoyé tel quel, jamais throw — la Server Action

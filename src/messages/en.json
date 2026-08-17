@@ -90,7 +90,26 @@
     "myContractTitle": "My contract",
     "approveContract": "Approve my contract",
     "contractApproved": "Contract approved, lease activated.",
-    "depositsIncompleteTenantHint": "Approval will be possible once the initial deposits are fully paid."
+    "depositsIncompleteTenantHint": "Approval will be possible once the initial deposits are fully paid.",
+    "endDateUpdated": "End date updated.",
+    "leaseEndingBanner": "This lease ends on {date}.",
+    "leaseEndingBannerNoDate": "This lease is approaching its end.",
+    "renewLease": "Renew",
+    "startClosure": "Start closure",
+    "keysReturnedBanner": "Key return to record for this lease.",
+    "keysReturnedAtLabel": "Key return date",
+    "recordKeysReturned": "Record key return",
+    "keysReturnedRecorded": "Key return recorded.",
+    "exitInspectionDueBanner": "Exit inspection to complete before {date}.",
+    "exitInspectionDueBannerNoDate": "Exit inspection to complete.",
+    "createExitInspection": "Create exit inspection",
+    "readyToCloseBanner": "Exit inspection finalized — the lease can be closed.",
+    "closeLeaseButton": "Close lease definitively",
+    "leaseClosed": "Lease closed definitively.",
+    "specialTermsLabel": "Special terms (specific to this lease)",
+    "specialTermsHint": "Leave empty to use the organization's default terms.",
+    "specialTermsUpdated": "Special terms updated.",
+    "deleteDraft": "Delete this draft"
   },
   "schedules": {
     "title": "Schedules",
@@ -348,12 +367,20 @@
     "email": "Email",
     "tenantCaptureLabel": "Allow tenants to capture their own move-in/move-out inspections by default",
     "tenantCaptureHint": "Default setting for all leases — can be overridden individually on each lease's page.",
+    "specialTermsLabel": "Default house rules / special terms",
+    "specialTermsHint": "Used for any lease that doesn't define its own special terms.",
     "updateSuccess": "Details updated."
   },
   "dashboard": {
     "lowCoverageTitle": "Leases with insufficient schedule coverage",
     "lowCoverageUntil": "Covered until {date}",
-    "lowCoverageNoSchedule": "No schedule generated yet"
+    "lowCoverageNoSchedule": "No schedule generated yet",
+    "upcomingEndDateTitle": "Leases ending soon",
+    "upcomingEndDateUntil": "Lease ends on {date}",
+    "closurePendingTitle": "Closures in progress",
+    "closurePendingKeysNeeded": "Key return to record",
+    "closurePendingInspectionNeeded": "Exit inspection to complete before {date}",
+    "closurePendingReady": "Ready to close"
   },
   "billing": {
     "invoicesTitle": "Invoices",

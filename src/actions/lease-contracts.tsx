@@ -72,6 +72,7 @@ export async function getOrGenerateLeaseContractUrlAction(
         securityDepositAmount: String(renderData.securityDepositAmount),
         utilityDepositAmount:
           renderData.utilityDepositAmount !== null ? String(renderData.utilityDepositAmount) : null,
+        specialTerms: renderData.specialTerms,
       }}
     />
   );
