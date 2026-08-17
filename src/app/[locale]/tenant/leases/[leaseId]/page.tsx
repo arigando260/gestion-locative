@@ -6,12 +6,31 @@ import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getDepositBalancesForLease } from "@/data/deposits";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
+import { getLeaseActivationReadiness } from "@/data/lease-contracts";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
 import { DepositBalanceCards } from "@/components/leases/deposit-balance-cards";
 import { InvoiceList } from "@/components/billing/invoice-list";
+import { LeaseContractApproval } from "@/components/tenant/lease-contract-approval";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+// Mêmes clés/couleurs que leases/[leaseId]/page.tsx (côté staff) — même
+// namespace "leases" déjà chargé ici (t("rentAmount") plus bas), pour ne
+// pas introduire une deuxième formulation du même statut.
+const STATUS_KEY: Record<string, string> = {
+  brouillon: "statusBrouillon",
+  actif: "statusActif",
+  resilie: "statusResilie",
+  termine: "statusTermine",
+};
+const STATUS_VARIANT: Record<string, "secondary" | "default" | "destructive" | "outline"> = {
+  brouillon: "secondary",
+  actif: "default",
+  resilie: "destructive",
+  termine: "outline",
+};
 
 export default async function TenantLeaseDetailPage({
   params,
@@ -20,11 +39,12 @@ export default async function TenantLeaseDetailPage({
   const lease = await getMyLease(leaseId);
   if (!lease) notFound();
 
-  const [schedules, payments, deposits, invoices] = await Promise.all([
+  const [schedules, payments, deposits, invoices, activationReadiness] = await Promise.all([
     getSchedulesForLease(leaseId),
     getPaymentsForLease(leaseId),
     getDepositBalancesForLease(leaseId),
     getScheduleInvoicesForLease(leaseId),
+    lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
   ]);
 
   const t = await getTranslations("leases");
@@ -42,8 +62,11 @@ export default async function TenantLeaseDetailPage({
       </Link>
 
       <Card className="max-w-md">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>{lease.properties?.name}</CardTitle>
+          <Badge variant={STATUS_VARIANT[lease.status] ?? "secondary"}>
+            {t(STATUS_KEY[lease.status] ?? "statusBrouillon")}
+          </Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
           <p>{lease.organizations?.name}</p>
@@ -53,6 +76,10 @@ export default async function TenantLeaseDetailPage({
           </p>
         </CardContent>
       </Card>
+
+      {lease.status === "brouillon" && (
+        <LeaseContractApproval leaseId={lease.id} readiness={activationReadiness} />
+      )}
 
       <Button
         variant="outline"

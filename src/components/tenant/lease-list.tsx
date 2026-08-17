@@ -12,7 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LeaseWithContext } from "@/data/leases";
 
+// Mêmes clés que la fiche de détail (leases.statusX) — un seul vocabulaire
+// de statut pour le locataire, liste et détail confondus. tenant.statusX
+// (formulation différente, ex: "En préparation") reste dans les fichiers
+// de traduction mais n'est plus référencée nulle part.
 const STATUS_KEY: Record<string, string> = {
+  brouillon: "statusBrouillon",
   actif: "statusActif",
   termine: "statusTermine",
   resilie: "statusResilie",
@@ -24,6 +29,7 @@ export async function TenantLeaseList({
   leases: LeaseWithContext[];
 }) {
   const t = await getTranslations("tenant");
+  const tl = await getTranslations("leases");
 
   if (leases.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("noLeases")}</p>;
@@ -33,7 +39,7 @@ export async function TenantLeaseList({
     property: lease.properties?.name ?? "—",
     address: lease.properties?.address ?? "",
     organization: lease.organizations?.name ?? "—",
-    statusLabel: t(STATUS_KEY[lease.status] ?? "statusActif"),
+    statusLabel: tl(STATUS_KEY[lease.status] ?? "statusBrouillon"),
     rent: lease.rent_amount,
   });
 

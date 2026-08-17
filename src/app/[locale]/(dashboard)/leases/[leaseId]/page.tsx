@@ -12,16 +12,37 @@ import {
 } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
+import { getDepositBalancesForLease } from "@/data/deposits";
+import { getLeaseActivationReadiness } from "@/data/lease-contracts";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
 import { PaymentForm } from "@/components/leases/payment-form";
 import { PaymentHistoryTable } from "@/components/leases/payment-history-table";
 import { TenantCaptureToggle } from "@/components/leases/tenant-capture-toggle";
+import { LeaseActivationPanel } from "@/components/leases/lease-activation-panel";
 import { InvoiceGenerateForm } from "@/components/billing/invoice-generate-form";
 import { InvoiceList } from "@/components/billing/invoice-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+// Même idiome que schedule-table.tsx (Module 5) : Record<string, ...> avec
+// fallback ?? plutôt qu'un type littéral — lease.status reste "string" côté
+// génération de types (non régénérée), même remarque que partout ailleurs
+// dans ce module.
+const STATUS_KEY: Record<string, string> = {
+  brouillon: "statusBrouillon",
+  actif: "statusActif",
+  resilie: "statusResilie",
+  termine: "statusTermine",
+};
+const STATUS_VARIANT: Record<string, "secondary" | "default" | "destructive" | "outline"> = {
+  brouillon: "secondary",
+  actif: "default",
+  resilie: "destructive",
+  termine: "outline",
+};
 
 export default async function LeasePage({
   params,
@@ -54,14 +75,17 @@ export default async function LeasePage({
     }
   }
 
-  const [property, organization, schedules, payments, invoices, permissions] = await Promise.all([
-    getProperty(lease.property_id),
-    getOrganization(lease.organization_id),
-    getSchedulesForLease(leaseId),
-    getPaymentsForLease(leaseId),
-    getScheduleInvoicesForLease(leaseId),
-    getCurrentUserPermissions(),
-  ]);
+  const [property, organization, schedules, payments, invoices, permissions, activationReadiness, depositBalances] =
+    await Promise.all([
+      getProperty(lease.property_id),
+      getOrganization(lease.organization_id),
+      getSchedulesForLease(leaseId),
+      getPaymentsForLease(leaseId),
+      getScheduleInvoicesForLease(leaseId),
+      getCurrentUserPermissions(),
+      lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
+      lease.status === "brouillon" ? getDepositBalancesForLease(leaseId) : Promise.resolve([]),
+    ]);
 
   const t = await getTranslations("leases");
   const ts = await getTranslations("schedules");
@@ -99,8 +123,13 @@ export default async function LeasePage({
       </div>
 
       <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle>{t("createTitle")}</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle>
+            {property ? `${t("summaryTitle")} — ${property.name}` : t("summaryTitle")}
+          </CardTitle>
+          <Badge variant={STATUS_VARIANT[lease.status] ?? "secondary"}>
+            {t(STATUS_KEY[lease.status] ?? "statusBrouillon")}
+          </Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
           <p>
@@ -117,6 +146,16 @@ export default async function LeasePage({
           </p>
         </CardContent>
       </Card>
+
+      {lease.status === "brouillon" && (
+        <LeaseActivationPanel
+          leaseId={lease.id}
+          lease={lease}
+          readiness={activationReadiness}
+          balances={depositBalances}
+          canGenerate={can(permissions, "lease_contracts", "create")}
+        />
+      )}
 
       {can(permissions, "leases", "update") && organization && (
         <Card className="max-w-md">
