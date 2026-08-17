@@ -3,6 +3,22 @@
 -- properties_effective_status, fonction private.property_effective_status,
 -- resserrement du CHECK sur properties.status).
 --
+-- Mis à jour par la migration "retrait des réservations — passe A" : le
+-- scénario 2 (ex-"réservation confirmée en cours -> occupe") vérifie
+-- désormais l'inverse — une réservation confirmée en cours ne compte plus
+-- comme occupation, private.property_effective_status n'a plus que 2
+-- paramètres (p_status, p_has_active_lease).
+--
+-- Corrigé au passage (bug préexistant, sans rapport avec le retrait des
+-- réservations) : les baux des scénarios 1 et 3 ne précisaient pas
+-- status='actif' à l'insertion, s'appuyant silencieusement sur le défaut
+-- posé au Module 3 — or le Module 10 (20260805240000) a changé ce défaut
+-- en 'brouillon' (un bail exige désormais une approbation de contrat pour
+-- devenir actif). Le scénario 3 passait par accident (l'override
+-- 'en_travaux' masque la valeur réelle testée) ; le scénario 1 échouait
+-- franchement. Les deux insertions posent maintenant status='actif'
+-- explicitement.
+--
 -- Script SQL autonome — PAS une migration, ne pas déposer dans
 -- supabase/migrations/. Même patron que supabase/tests/module7b_maintenance_locks.sql
 -- et supabase/tests/module8_lease_termination_consensus.sql.
@@ -88,18 +104,29 @@ begin
     '{}'::jsonb, 'authenticated', 'authenticated'
   );
 
-  -- Bien A : longue_duree, recevra un bail actif.
+  -- Bien A : longue_duree, recevra un bail actif. Le passage direct à
+  -- status='actif' n'est normalement pas permis à l'INSERT (Module 10,
+  -- trg_leases_validate_status_transition impose 'brouillon' puis une
+  -- activation en cascade via l'approbation du contrat) — hors sujet ici
+  -- (ce test porte sur le calcul du statut effectif, pas sur le cycle de
+  -- vie du bail), donc le garde-fou est désactivé le temps de cette seule
+  -- insertion, même technique que supabase/tests/module10c_allow_delete_
+  -- unapproved_lease_contract.sql et module10e_atomic_draft_lease_deletion.sql.
   insert into public.properties (organization_id, name, address, price, location_type)
   values (v_org_id, 'Bien 2c — A (bail actif)', '1 rue du Test', 500000, 'longue_duree')
   returning id into v_prop_a;
 
+  alter table public.leases disable trigger trg_leases_validate_status_transition;
+
   insert into public.leases (
     organization_id, property_id, tenant_account_id, start_date,
-    rent_amount, payment_frequency, security_deposit_amount, payment_timing
-  ) values (v_org_id, v_prop_a, v_tenant_id, current_date, 100000, 'mensuel', 200000, 'postpaye');
+    rent_amount, payment_frequency, security_deposit_amount, payment_timing, status
+  ) values (v_org_id, v_prop_a, v_tenant_id, current_date, 100000, 'mensuel', 200000, 'postpaye', 'actif');
 
   -- Bien B : courte_duree, recevra une réservation confirmée couvrant
-  -- aujourd'hui (check_in = hier, check_out = dans 3 jours).
+  -- aujourd'hui (check_in = hier, check_out = dans 3 jours) — depuis la
+  -- passe A du retrait des réservations, ceci ne doit PLUS rendre le bien
+  -- 'occupe' (voir scénario 2 plus bas).
   insert into public.properties (organization_id, name, address, price, location_type)
   values (v_org_id, 'Bien 2c — B (réservation en cours)', '2 rue du Test', 500000, 'courte_duree')
   returning id into v_prop_b;
@@ -121,8 +148,10 @@ begin
 
   insert into public.leases (
     organization_id, property_id, tenant_account_id, start_date,
-    rent_amount, payment_frequency, security_deposit_amount, payment_timing
-  ) values (v_org_id, v_prop_c, v_tenant_id, current_date, 100000, 'mensuel', 200000, 'postpaye');
+    rent_amount, payment_frequency, security_deposit_amount, payment_timing, status
+  ) values (v_org_id, v_prop_c, v_tenant_id, current_date, 100000, 'mensuel', 200000, 'postpaye', 'actif');
+
+  alter table public.leases enable trigger trg_leases_validate_status_transition;
 
   -- Bien D : ni bail ni réservation, status='disponible' (défaut).
   insert into public.properties (organization_id, name, address, price, location_type)
@@ -161,7 +190,9 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 3. SCÉNARIO 2 — RÉSERVATION CONFIRMÉE EN COURS -> occupe.
+-- 3. SCÉNARIO 2 — RÉSERVATION CONFIRMÉE EN COURS -> reste disponible
+--    (retrait des réservations, passe A : plus aucune réservation, même
+--    confirmée et en cours, ne compte comme occupation).
 -- ----------------------------------------------------------------------------
 
 do $$
@@ -174,7 +205,7 @@ begin
   select effective_status into v_effective
   from public.properties_effective_status where id = f.prop_b;
 
-  perform pg_temp.check_detail('2 bien avec réservation confirmée en cours -> occupe', v_effective, 'occupe');
+  perform pg_temp.check_detail('2 bien avec réservation confirmée en cours -> reste disponible (réservations retirées du calcul)', v_effective, 'disponible');
 end;
 $$;
 
