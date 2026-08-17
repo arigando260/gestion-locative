@@ -40,6 +40,7 @@
     "createSuccess": "Property created successfully.",
     "createNewLease": "Create a lease",
     "viewActiveLease": "View active lease",
+    "viewPendingLease": "View pending draft",
     "typeLongueDuree": "Long-term",
     "typeMeubleSimple": "Furnished short-term",
     "typeCourteDuree": "Short-term"

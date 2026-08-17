@@ -40,6 +40,7 @@
     "createSuccess": "Bien créé avec succès.",
     "createNewLease": "Créer un bail",
     "viewActiveLease": "Voir le bail actif",
+    "viewPendingLease": "Voir le brouillon en cours",
     "typeLongueDuree": "Longue durée",
     "typeMeubleSimple": "Meublé simple",
     "typeCourteDuree": "Courte durée"

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getPropertyWithEffectiveStatus, type PropertyStatus } from "@/data/properties";
-import { getActiveLeaseForProperty } from "@/data/leases";
+import { getPendingOrActiveLeaseForProperty } from "@/data/leases";
 import { getPropertyTypes } from "@/data/property-types";
 import { getPropertyTypeLabel } from "@/lib/property-type-labels";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
@@ -32,11 +32,11 @@ export default async function PropertyPage({
   params,
 }: PageProps<"/[locale]/properties/[propertyId]">) {
   const { propertyId } = await params;
-  const [property, propertyTypes, permissions, activeLease] = await Promise.all([
+  const [property, propertyTypes, permissions, pendingOrActiveLease] = await Promise.all([
     getPropertyWithEffectiveStatus(propertyId),
     getPropertyTypes(),
     getCurrentUserPermissions(),
-    getActiveLeaseForProperty(propertyId),
+    getPendingOrActiveLeaseForProperty(propertyId),
   ]);
 
   if (!property) notFound();
@@ -46,7 +46,7 @@ export default async function PropertyPage({
   const canCreateLease =
     can(permissions, "leases", "create") &&
     LEASE_ELIGIBLE_TYPES.includes(property.location_type) &&
-    !activeLease;
+    !pendingOrActiveLease;
   const canCreateReservation =
     can(permissions, "reservations", "create") &&
     RESERVATION_ELIGIBLE_TYPES.includes(property.location_type);
@@ -75,14 +75,14 @@ export default async function PropertyPage({
         </CardContent>
       </Card>
       <div className="flex flex-wrap gap-2">
-        {activeLease && (
+        {pendingOrActiveLease && (
           <Button
             className="w-fit"
             variant="outline"
-            render={<Link href={`/leases/${activeLease.id}`} />}
+            render={<Link href={`/leases/${pendingOrActiveLease.id}`} />}
             nativeButton={false}
           >
-            {t("viewActiveLease")}
+            {pendingOrActiveLease.status === "actif" ? t("viewActiveLease") : t("viewPendingLease")}
           </Button>
         )}
         {canCreateLease && (

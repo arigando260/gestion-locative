@@ -57,16 +57,19 @@ export async function getLease(id: string): Promise<Lease | null> {
   return data;
 }
 
-// Une seule ligne possible (leases_one_active_per_property, Module 3) —
-// utilisé uniquement pour proposer un lien direct depuis la fiche bien vers
-// son bail actif, quand il en existe un.
-export async function getActiveLeaseForProperty(propertyId: string): Promise<{ id: string } | null> {
+// Une seule ligne possible (leases_one_pending_or_active_per_property,
+// Module 10b) — utilisé uniquement pour proposer un lien direct depuis la
+// fiche bien vers son bail en cours (actif OU brouillon), quand il en
+// existe un ; renommée pour refléter l'index qu'elle reflète désormais.
+export async function getPendingOrActiveLeaseForProperty(
+  propertyId: string
+): Promise<{ id: string; status: string } | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("leases")
-    .select("id")
+    .select("id, status")
     .eq("property_id", propertyId)
-    .eq("status", "actif")
+    .in("status", ["actif", "brouillon"])
     .maybeSingle();
 
   if (error) throw error;
