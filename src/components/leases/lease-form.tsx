@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createLeaseAction } from "@/actions/leases";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export function LeaseForm({
   const tc = useTranslations("common");
   const locale = useLocale();
   const [state, formAction] = useActionState(createLeaseAction, null);
+  const [durationType, setDurationType] = useState("indeterminee");
 
   return (
     <form action={formAction} className="flex max-w-md flex-col gap-4">
@@ -45,11 +46,21 @@ export function LeaseForm({
         <Label htmlFor="start_date">{t("startDate")}</Label>
         <Input id="start_date" name="start_date" type="date" required />
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="end_date">{t("endDate")}</Label>
-        <Input id="end_date" name="end_date" type="date" />
-        <p className="text-xs text-muted-foreground">{t("endDateHint")}</p>
-      </div>
+      <SelectField
+        name="duration_type"
+        label={t("durationType")}
+        onValueChange={setDurationType}
+        options={[
+          { value: "indeterminee", label: t("durationIndeterminee") },
+          { value: "determinee", label: t("durationDeterminee") },
+        ]}
+      />
+      {durationType === "determinee" && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="end_date">{t("endDate")}</Label>
+          <Input id="end_date" name="end_date" type="date" required />
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rent_amount">{t("rentAmount")}</Label>
         <Input
