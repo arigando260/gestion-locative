@@ -74,8 +74,8 @@ export type PaymentReceiptRenderData = {
 
 // Rassemble tout ce que le template PDF a besoin d'afficher (voir
 // lib/pdf/receipt-document.tsx) : organisation, locataire (résolu via le
-// bail OU la réservation du paiement — jamais les deux, payments_exactly_one_link,
-// Module 5), échéance concernée. Réservé au staff (seul appelant, voir
+// bail du paiement, payments_lease_required, Module 5/C), échéance
+// concernée. Réservé au staff (seul appelant, voir
 // actions/payment-receipts.ts) : jamais utilisé côté locataire, qui ne
 // génère jamais.
 export async function getPaymentReceiptRenderData(
@@ -86,7 +86,7 @@ export async function getPaymentReceiptRenderData(
   const { data: payment, error } = await supabase
     .from("payments")
     .select(
-      "amount, payment_date, method, organizations(name, address, phone, email), payment_schedules(period_start_date, period_end_date), leases(tenant_account_id), reservations(tenant_account_id)"
+      "amount, payment_date, method, organizations(name, address, phone, email), payment_schedules(period_start_date, period_end_date), leases(tenant_account_id)"
     )
     .eq("id", paymentId)
     .maybeSingle();
@@ -105,10 +105,9 @@ export async function getPaymentReceiptRenderData(
     organizations: { name: string; address: string | null; phone: string | null; email: string | null } | null;
     payment_schedules: { period_start_date: string; period_end_date: string } | null;
     leases: { tenant_account_id: string } | null;
-    reservations: { tenant_account_id: string } | null;
   };
 
-  const tenantAccountId = row.leases?.tenant_account_id ?? row.reservations?.tenant_account_id ?? null;
+  const tenantAccountId = row.leases?.tenant_account_id ?? null;
   let tenantName = "—";
   if (tenantAccountId) {
     const { data: tenant } = await supabase

@@ -9,7 +9,6 @@ export type ScheduleInvoice = {
   id: string;
   organization_id: string;
   lease_id: string | null;
-  reservation_id: string | null;
   storage_path: string;
   generated_by: string;
   generated_at: string;

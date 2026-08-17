@@ -1,0 +1,24 @@
+-- ============================================================================
+-- RETRAIT DES RÉSERVATIONS — PASSE E : SUPPRESSION DE LA TABLE.
+--
+-- Dernière passe. Vérifié juste avant d'écrire cette migration (requête
+-- pg_depend ponctuelle sur le distant, après application des passes A à D) :
+--   - Aucune FK externe ne référence plus public.reservations (les FK
+--     composites reservation_org_fk des 5 tables partagées ont été retirées
+--     à la Migration C ; aucune autre table n'y a jamais pointé).
+--   - Le catalogue de permissions ne porte plus le resource 'reservations'
+--     (Migration D).
+--   - Les seules dépendances restantes sur la table sont ses propres objets
+--     internes (contraintes, index, policies RLS, triggers) : DROP TABLE
+--     les retire tous automatiquement sans CASCADE, aucun objet externe
+--     n'étant concerné.
+-- 0 ligne dans reservations au moment de cette migration (déjà confirmé au
+-- diagnostic initial et revérifié depuis) : aucune perte de donnée réelle.
+--
+-- L'extension btree_gist (Module 4), posée uniquement pour la contrainte
+-- d'exclusion GiST reservations_no_overlap_confirmed, devient inutilisée
+-- mais n'est pas retirée ici — la laisser installée ne coûte rien, la
+-- retirer n'apporte rien de mesurable ; hors périmètre de ce nettoyage.
+-- ============================================================================
+
+drop table public.reservations;

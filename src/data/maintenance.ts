@@ -56,7 +56,6 @@ export type MaintenanceTicketPhoto = {
 export type MaintenanceTicketImputation = {
   id: string;
   lease_id: string | null;
-  reservation_id: string | null;
   amount: number;
   reason: string | null;
   created_at: string;
@@ -191,7 +190,7 @@ export async function getMaintenanceTicketImputations(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("deposit_ledger")
-    .select("id, lease_id, reservation_id, amount, reason, created_at")
+    .select("id, lease_id, amount, reason, created_at")
     .eq("maintenance_ticket_id", ticketId)
     .order("created_at", { ascending: true });
 
