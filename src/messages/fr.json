@@ -10,7 +10,6 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "properties": "Biens",
-    "reservations": "Réservations",
     "maintenance": "Maintenance",
     "leaseTerminations": "Résiliations",
     "settings": "Paramètres",
@@ -147,22 +146,6 @@
     "downloadReceipt": "Télécharger le reçu",
     "generatingReceipt": "Génération...",
     "receiptNotReady": "Le reçu n'est pas encore disponible."
-  },
-  "reservations": {
-    "title": "Réservations",
-    "create": "Créer une réservation",
-    "createTitle": "Créer une réservation",
-    "property": "Bien",
-    "checkIn": "Arrivée",
-    "checkOut": "Départ",
-    "nightlyRate": "Tarif par nuit",
-    "totalAmount": "Montant total",
-    "status": "Statut",
-    "statusConfirmee": "Confirmée",
-    "statusAnnulee": "Annulée",
-    "statusTerminee": "Terminée",
-    "empty": "Aucune réservation pour l'instant.",
-    "createSuccess": "Réservation créée avec succès."
   },
   "tenant": {
     "myLeases": "Mes contrats",

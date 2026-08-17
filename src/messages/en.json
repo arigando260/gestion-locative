@@ -10,7 +10,6 @@
   "nav": {
     "dashboard": "Dashboard",
     "properties": "Properties",
-    "reservations": "Reservations",
     "maintenance": "Maintenance",
     "leaseTerminations": "Terminations",
     "settings": "Settings",
@@ -147,22 +146,6 @@
     "receiptNotReady": "The receipt is not available yet.",
     "history": "Payment history",
     "empty": "No payments yet."
-  },
-  "reservations": {
-    "title": "Reservations",
-    "create": "Create a reservation",
-    "createTitle": "Create a reservation",
-    "property": "Property",
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
-    "nightlyRate": "Nightly rate",
-    "totalAmount": "Total amount",
-    "status": "Status",
-    "statusConfirmee": "Confirmed",
-    "statusAnnulee": "Cancelled",
-    "statusTerminee": "Completed",
-    "empty": "No reservations yet.",
-    "createSuccess": "Reservation created successfully."
   },
   "tenant": {
     "myLeases": "My leases",

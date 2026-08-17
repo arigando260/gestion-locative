@@ -43,9 +43,6 @@ export default async function DashboardLayout({
             <Link href="/properties" className="hover:underline">
               {t("properties")}
             </Link>
-            <Link href="/reservations" className="hover:underline">
-              {t("reservations")}
-            </Link>
             <Link href="/maintenance" className="hover:underline">
               {t("maintenance")}
             </Link>

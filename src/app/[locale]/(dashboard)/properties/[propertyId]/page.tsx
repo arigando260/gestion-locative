@@ -15,12 +15,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Un bail (Lease) n'a de sens que sur un bien loué à long terme — les biens
-// courte_duree passent par les Réservations (Module 4), pas par cette page.
-// Le trigger validate_lease_property_location_type le refuserait de toute
-// façon ; on évite juste de proposer une action vouée à échouer.
-const LEASE_ELIGIBLE_TYPES = ["longue_duree", "meuble_simple"];
-const RESERVATION_ELIGIBLE_TYPES = ["courte_duree"];
+// Un bail (Lease) n'a de sens que sur un bien loué à long terme. Le trigger
+// validate_lease_property_location_type le refuserait de toute façon ; on
+// évite juste de proposer une action vouée à échouer.
+const LEASE_ELIGIBLE_TYPES = ["longue_duree"];
 
 const STATUS_KEY: Record<PropertyStatus, string> = {
   disponible: "statusAvailable",
@@ -42,14 +40,10 @@ export default async function PropertyPage({
   if (!property) notFound();
 
   const t = await getTranslations("properties");
-  const tr = await getTranslations("reservations");
   const canCreateLease =
     can(permissions, "leases", "create") &&
     LEASE_ELIGIBLE_TYPES.includes(property.location_type) &&
     !pendingOrActiveLease;
-  const canCreateReservation =
-    can(permissions, "reservations", "create") &&
-    RESERVATION_ELIGIBLE_TYPES.includes(property.location_type);
 
   return (
     <div className="flex flex-col gap-6">
@@ -92,16 +86,6 @@ export default async function PropertyPage({
             nativeButton={false}
           >
             {t("createNewLease")}
-          </Button>
-        )}
-        {canCreateReservation && (
-          <Button
-            className="w-fit"
-            variant="outline"
-            render={<Link href={`/properties/${property.id}/reservations/new`} />}
-            nativeButton={false}
-          >
-            {tr("create")}
           </Button>
         )}
       </div>
