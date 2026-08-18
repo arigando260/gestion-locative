@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Tables, TablesInsert } from "@/lib/supabase/database.types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
 
 export type InspectionWithEffectiveStatus =
   Tables<"property_inspections_effective_status">;
@@ -146,6 +146,28 @@ export async function addInspectionItem(input: AddInspectionItemInput) {
   return supabase.from("inspection_items").insert(input).select().single();
 }
 
+export type UpdateInspectionItemInput = Pick<
+  TablesUpdate<"inspection_items">,
+  "zone" | "description" | "condition" | "estimated_repair_cost"
+>;
+
+// Le trigger prevent_finalized_inspection_item_change (Module 6) refuse déjà
+// toute modification une fois l'état des lieux parent finalisé — pas de
+// vérification dupliquée ici.
+export async function updateInspectionItem(id: string, input: UpdateInspectionItemInput) {
+  const supabase = await createClient();
+  return supabase.from("inspection_items").update(input).eq("id", id).select().single();
+}
+
+// inspection_photos_item_org_fk est ON DELETE RESTRICT (jamais de cascade
+// automatique sur un historique de preuve) : si l'item a encore des photos,
+// cette suppression échoue proprement — il faut d'abord les supprimer une à
+// une via deleteInspectionPhoto.
+export async function deleteInspectionItem(id: string) {
+  const supabase = await createClient();
+  return supabase.from("inspection_items").delete().eq("id", id);
+}
+
 export type AddInspectionPhotoInput = {
   organization_id: string;
   inspection_item_id: string;
@@ -159,6 +181,19 @@ export type AddInspectionPhotoInput = {
 export async function addInspectionPhotoRecord(input: AddInspectionPhotoInput) {
   const supabase = await createClient();
   return supabase.from("inspection_photos").insert(input).select().single();
+}
+
+// Supprime la ligne d'abord (RLS + trigger de verrou font autorité), le
+// fichier ensuite : si la suppression en base échoue, le fichier doit
+// rester pour ne jamais laisser une ligne pointer vers un objet manquant.
+// Même patron que deleteMaintenanceTicketPhoto (Module 7b).
+export async function deleteInspectionPhoto(id: string, storagePath: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("inspection_photos").delete().eq("id", id);
+  if (error) return { error };
+
+  await supabase.storage.from("inspection-photos").remove([storagePath]);
+  return { error: null };
 }
 
 export async function finalizeInspection(id: string) {

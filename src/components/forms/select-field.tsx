@@ -20,6 +20,7 @@ export function SelectField({
   options,
   defaultValue,
   onValueChange,
+  id,
 }: {
   name: string;
   label: string;
@@ -28,7 +29,13 @@ export function SelectField({
   // Optionnel : pour les formulaires où un champ conditionne l'affichage
   // d'un autre (ex: catégorie d'imputation -> échéance à solder).
   onValueChange?: (value: string) => void;
+  // Optionnel, distinct de `name` : nécessaire quand plusieurs instances du
+  // même champ (même `name`, pour le FormData) coexistent sur une page —
+  // sinon id DOM dupliqués. Par défaut égal à `name`, comportement inchangé
+  // pour tous les appelants existants.
+  id?: string;
 }) {
+  const fieldId = id ?? name;
   const [value, setValue] = useState(defaultValue ?? options[0]?.value ?? "");
 
   // Le formulaire parent peut faire vivre ce champ plus longtemps que sa
@@ -51,10 +58,10 @@ export function SelectField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={fieldId}>{label}</Label>
       <input type="hidden" name={name} value={value} />
       <Select value={value} onValueChange={(next) => setValue(next ?? "")}>
-        <SelectTrigger className="w-full" id={name}>
+        <SelectTrigger className="w-full" id={fieldId}>
           <SelectValue>
             {(val: string) => options.find((o) => o.value === val)?.label ?? val}
           </SelectValue>

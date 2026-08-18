@@ -5,7 +5,10 @@ import { getCurrentProfile } from "@/data/session";
 import {
   createInspection,
   addInspectionItem,
+  updateInspectionItem,
+  deleteInspectionItem,
   addInspectionPhotoRecord,
+  deleteInspectionPhoto,
   finalizeInspection,
   updateInspectionObservations,
   submitTenantValidation,
@@ -92,10 +95,88 @@ export async function addInspectionItemAction(
   return { success: true, message: t("itemAdded") };
 }
 
+export async function updateInspectionItemAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const item_id = String(formData.get("item_id") ?? "");
+  const inspection_id = String(formData.get("inspection_id") ?? "");
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const zone = String(formData.get("zone") ?? "").trim();
+  const condition = String(formData.get("condition") ?? "");
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const costRaw = String(formData.get("estimated_repair_cost") ?? "").trim();
+
+  if (!item_id || !inspection_id || !zone || !condition) {
+    return { success: false, message: "Merci de remplir tous les champs." };
+  }
+
+  const { error } = await updateInspectionItem(item_id, {
+    zone,
+    description,
+    condition,
+    estimated_repair_cost: costRaw ? Number(costRaw) : null,
+  });
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}/inspections/${inspection_id}`);
+  const t = await getTranslations("inspections");
+  return { success: true, message: t("itemUpdated") };
+}
+
 export type ConfirmPhotoUploadResult = {
   success: boolean;
   message?: string;
 };
+
+// Appelée directement (pas via <form action=...>), même patron que
+// deleteMaintenanceTicketPhotoAction (Module 7b). inspection_photos_item_org_fk
+// est ON DELETE RESTRICT : supprimer un item qui a encore des photos échoue —
+// il faut supprimer ses photos d'abord (voir deleteInspectionItem). Ce cas
+// précis (23503 sur CETTE contrainte) a un message dédié, plus actionnable
+// que le message générique "violation de contrainte" de toUserMessage —
+// même principe que lib/errors.ts (code connu -> message dédié), mais
+// scopé ici : la contrainte n'a de sens que pour cette action-ci, pas pour
+// toutes les violations 23503 de l'app.
+export async function deleteInspectionItemAction(input: {
+  id: string;
+  inspection_id: string;
+  lease_id: string;
+}): Promise<ConfirmPhotoUploadResult> {
+  const { error } = await deleteInspectionItem(input.id);
+
+  if (error) {
+    const t = await getTranslations("inspections");
+    if (error.code === "23503" && error.message?.includes("inspection_photos_item_org_fk")) {
+      return { success: false, message: t("deleteItemHasPhotos") };
+    }
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${input.lease_id}/inspections/${input.inspection_id}`);
+  return { success: true };
+}
+
+// Appelée directement (pas via <form action=...>), même patron que
+// deleteMaintenanceTicketPhotoAction (Module 7b).
+export async function deleteInspectionPhotoAction(input: {
+  id: string;
+  storage_path: string;
+  inspection_id: string;
+  lease_id: string;
+}): Promise<ConfirmPhotoUploadResult> {
+  const { error } = await deleteInspectionPhoto(input.id, input.storage_path);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${input.lease_id}/inspections/${input.inspection_id}`);
+  return { success: true };
+}
 
 // Appelée directement (pas via <form action=...>) juste après un envoi
 // réussi vers le bucket depuis le navigateur — voir
