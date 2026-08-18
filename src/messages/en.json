@@ -235,6 +235,7 @@
     "conditionDegrade": "Damaged",
     "conditionHorsService": "Out of service",
     "description": "Description",
+    "descriptionRequiredHint": "Required for a damaged or out-of-service finding.",
     "estimatedRepairCost": "Estimated repair cost",
     "itemAdded": "Finding added.",
     "photos": "Photos",

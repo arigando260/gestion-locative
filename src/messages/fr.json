@@ -235,6 +235,7 @@
     "conditionDegrade": "Dégradé",
     "conditionHorsService": "Hors service",
     "description": "Description",
+    "descriptionRequiredHint": "Obligatoire pour un élément dégradé ou hors service.",
     "estimatedRepairCost": "Coût de réparation estimé",
     "itemAdded": "Constat ajouté.",
     "photos": "Photos",
