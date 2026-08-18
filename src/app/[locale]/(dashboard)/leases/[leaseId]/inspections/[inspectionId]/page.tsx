@@ -7,6 +7,7 @@ import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { InspectionItemForm } from "@/components/inspections/inspection-item-form";
 import { InspectionItemCard } from "@/components/inspections/inspection-item-card";
 import { FinalizeInspectionForm } from "@/components/inspections/finalize-inspection-form";
+import { ObservationsForm } from "@/components/inspections/observations-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -53,6 +54,32 @@ export default async function InspectionDetailPage({
           </Badge>
         </CardHeader>
       </Card>
+
+      {canManage && isDraft ? (
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-base">{t("observations")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ObservationsForm
+              inspectionId={inspectionId}
+              leaseId={leaseId}
+              observations={inspection.observations}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        inspection.observations && (
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle className="text-base">{t("observations")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm whitespace-pre-wrap">{inspection.observations}</p>
+            </CardContent>
+          </Card>
+        )
+      )}
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t("items")}</h2>

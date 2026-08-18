@@ -7,6 +7,7 @@ import {
   addInspectionItem,
   addInspectionPhotoRecord,
   finalizeInspection,
+  updateInspectionObservations,
   submitTenantValidation,
   type TenantValidationStatus,
 } from "@/data/inspections";
@@ -121,6 +122,36 @@ export async function confirmInspectionPhotoUploadAction(input: {
 
   revalidatePath(`/leases/${input.lease_id}/inspections/${input.inspection_id}`);
   return { success: true };
+}
+
+// Seul point de saisie des observations (Module 6g) : la création
+// (InspectionForm) n'expose plus ce champ — il n'a pas sa place avant que
+// le staff ait commencé à constater. Colonne NULL à l'insertion, remplie
+// ici depuis la page de détail/édition du brouillon. La colonne redevient
+// immuable une fois finalisé (private.prevent_finalized_inspection_change,
+// Module 6, observations y figure déjà) — cette action échouera donc
+// naturellement si appelée après finalisation, sans logique dupliquée ici.
+export async function updateInspectionObservationsAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const id = String(formData.get("id") ?? "");
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const observations = String(formData.get("observations") ?? "").trim() || null;
+
+  if (!id || !lease_id) {
+    return { success: false, message: "État des lieux introuvable." };
+  }
+
+  const { error } = await updateInspectionObservations(id, observations);
+
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath(`/leases/${lease_id}/inspections/${id}`);
+  const t = await getTranslations("inspections");
+  return { success: true, message: t("observationsUpdated") };
 }
 
 export async function finalizeInspectionAction(

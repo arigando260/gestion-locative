@@ -122,6 +122,20 @@ export async function createInspection(input: CreateInspectionInput) {
     .single();
 }
 
+// Seul point d'écriture d'observations (Module 6g) — voir
+// updateInspectionObservationsAction. La colonne reste NULL depuis
+// createInspection ; remplie ensuite depuis la page de détail du
+// brouillon, jamais à la création.
+export async function updateInspectionObservations(id: string, observations: string | null) {
+  const supabase = await createClient();
+  return supabase
+    .from("property_inspections")
+    .update({ observations })
+    .eq("id", id)
+    .select()
+    .single();
+}
+
 export type AddInspectionItemInput = Pick<
   TablesInsert<"inspection_items">,
   "organization_id" | "inspection_id" | "zone" | "description" | "condition" | "estimated_repair_cost"
