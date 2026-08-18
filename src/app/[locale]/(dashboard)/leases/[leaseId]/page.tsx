@@ -199,6 +199,7 @@ export default async function LeasePage({
         <LeaseLifecycleBanner
           leaseId={lease.id}
           closureEngaged={isLeaseClosureEngaged(closureStatus)}
+          entryInspectionDone={closureStatus.entry_inspection_done}
           endDateApproaching={
             closureStatus.lease_end_date !== null &&
             closureStatus.lease_end_date <= leaseEndApproachingThresholdDate()

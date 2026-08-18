@@ -1,6 +1,10 @@
 import "server-only";
 import { getLeasesWithLowScheduleCoverage } from "./schedules";
-import { getLeasesWithUpcomingEndDate, getLeasesPendingClosure } from "./lease-closure";
+import {
+  getLeasesWithUpcomingEndDate,
+  getLeasesPendingClosure,
+  getLeasesNeedingEntryInspection,
+} from "./lease-closure";
 import { can, type PermissionSet } from "./permissions";
 
 // Une seule définition du bloc d'alertes du tableau de bord staff — chaque
@@ -29,6 +33,12 @@ export type DashboardAlert =
       tenantName: string | null;
       subKind: "keys_needed" | "inspection_needed" | "ready";
       dueDate: string | null;
+    }
+  | {
+      kind: "entry_inspection_needed";
+      leaseId: string;
+      propertyName: string;
+      tenantName: string | null;
     };
 
 // Gate chaque catégorie sur la permission de lecture pertinente — même
@@ -81,6 +91,16 @@ export async function getDashboardAlerts(
             ? "keys_needed"
             : "inspection_needed",
         dueDate: lease.exit_inspection_due_date,
+      });
+    }
+
+    const needingEntryInspection = await getLeasesNeedingEntryInspection(organizationId);
+    for (const lease of needingEntryInspection) {
+      alerts.push({
+        kind: "entry_inspection_needed",
+        leaseId: lease.lease_id,
+        propertyName: lease.property_name,
+        tenantName: lease.tenant_full_name,
       });
     }
   }

@@ -26,10 +26,14 @@ const TARGET_FIELD: Record<DepositType, "security_deposit_amount" | "utility_dep
 
 const DEPOSIT_TYPES: DepositType[] = ["avance_garantie", "caution_utilities"];
 
-// Deux cartes fixes, une par type — jamais masquées (contrairement à
-// RefundForm, qui ne propose que les soldes réellement disponibles) :
-// verser un dépôt initial reste pertinent même à cible nulle ou déjà
-// atteinte, le staff peut toujours enregistrer un montant.
+// Deux cartes fixes, une par type, jamais masquées (contrairement à
+// RefundForm, qui ne propose que les soldes réellement disponibles) — mais
+// chacune se verrouille indépendamment en résumé lecture seule dès que son
+// montant cible est atteint, même principe de verrouillage que RefundForm
+// (qui, lui, retire la carte plutôt que de la verrouiller — la différence
+// tient à ce qu'il reste à faire : rien côté remboursement une fois le
+// solde épuisé, alors qu'ici la carte garde un intérêt informatif une fois
+// complète).
 export function InitialDepositForm({
   leaseId,
   lease,
@@ -44,17 +48,14 @@ export function InitialDepositForm({
       {DEPOSIT_TYPES.map((depositType) => {
         const target = lease[TARGET_FIELD[depositType]];
         const held = balances.find((b) => b.deposit_type === depositType)?.amount_held ?? 0;
-        // target null = aucune cible connue pour ce type -> champ vide, pas
-        // de suggestion ; sinon reste à verser, jamais négatif (0 si déjà
-        // entièrement versé, toujours modifiable ensuite).
-        const suggestedAmount = target === null ? "" : Math.max(target - held, 0);
 
         return (
           <InitialDepositCard
             key={depositType}
             leaseId={leaseId}
             depositType={depositType}
-            suggestedAmount={suggestedAmount}
+            target={target}
+            held={held}
           />
         );
       })}
@@ -63,21 +64,29 @@ export function InitialDepositForm({
 }
 
 // Formulaire indépendant par carte, même principe que RefundBalanceRow
-// (refund-form.tsx) : chaque carte a son propre useActionState.
-// Contrairement au remboursement, le montant reste MODIFIABLE (pas de champ
-// caché) — suggestedAmount n'est qu'une valeur de départ.
+// (refund-form.tsx) : chaque carte a son propre useActionState et sa propre
+// décision de verrouillage, jamais celle de l'autre type.
 function InitialDepositCard({
   leaseId,
   depositType,
-  suggestedAmount,
+  target,
+  held,
 }: {
   leaseId: string;
   depositType: DepositType;
-  suggestedAmount: number | "";
+  target: number | null;
+  held: number;
 }) {
   const t = useTranslations("deposits");
   const tc = useTranslations("common");
   const [state, formAction] = useActionState(recordInitialDepositAction, null);
+
+  // target null = aucune cible connue pour ce type -> jamais verrouillée
+  // (rien à atteindre). Sinon reste à verser, jamais négatif (0 si déjà
+  // entièrement versé) — mais dans ce cas la carte est de toute façon
+  // verrouillée avant que ce calcul ne serve encore à quoi que ce soit.
+  const isComplete = target !== null && held >= target;
+  const suggestedAmount = target === null ? "" : Math.max(target - held, 0);
 
   return (
     <Card>
@@ -85,26 +94,35 @@ function InitialDepositCard({
         <CardTitle className="text-base">{t(TYPE_KEY[depositType])}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="flex flex-col gap-3">
-          <input type="hidden" name="lease_id" value={leaseId} />
-          <input type="hidden" name="deposit_type" value={depositType} />
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`initial_deposit_amount_${depositType}`}>{t("amount")}</Label>
-            <Input
-              id={`initial_deposit_amount_${depositType}`}
-              name="amount"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={suggestedAmount}
-              required
-            />
+        {isComplete ? (
+          <div className="flex flex-col gap-1 text-sm">
+            <p className="text-muted-foreground">
+              {t("amountHeld")}: {held} / {target}
+            </p>
+            <p className="font-medium">{t("depositTargetReached")}</p>
           </div>
-          <FormMessage state={state} />
-          <SubmitButton pendingText={tc("loading")}>
-            {t("recordInitialDeposit")}
-          </SubmitButton>
-        </form>
+        ) : (
+          <form action={formAction} className="flex flex-col gap-3">
+            <input type="hidden" name="lease_id" value={leaseId} />
+            <input type="hidden" name="deposit_type" value={depositType} />
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`initial_deposit_amount_${depositType}`}>{t("amount")}</Label>
+              <Input
+                id={`initial_deposit_amount_${depositType}`}
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={suggestedAmount}
+                required
+              />
+            </div>
+            <FormMessage state={state} />
+            <SubmitButton pendingText={tc("loading")}>
+              {t("recordInitialDeposit")}
+            </SubmitButton>
+          </form>
+        )}
       </CardContent>
     </Card>
   );

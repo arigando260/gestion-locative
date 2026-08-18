@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
 import type { LeaseActivationReadiness } from "@/data/lease-contracts";
@@ -65,6 +67,15 @@ export async function LeaseActivationPanel({
         <p className={`text-sm ${depositsComplete ? "font-medium" : "text-muted-foreground"}`}>
           {depositsComplete ? t("depositsComplete") : t("depositsIncomplete")}
         </p>
+
+        <Button
+          variant="outline"
+          className="w-fit"
+          render={<Link href={`/leases/${leaseId}/deposits`} />}
+          nativeButton={false}
+        >
+          {td("recordDeposit")}
+        </Button>
 
         {!contractGenerated && canGenerate && (
           <DocumentDownloadButton

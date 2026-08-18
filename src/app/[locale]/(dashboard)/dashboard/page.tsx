@@ -40,6 +40,10 @@ export default async function DashboardPage({
   const lowCoverage = alerts.filter(
     (a): a is Extract<DashboardAlert, { kind: "low_coverage" }> => a.kind === "low_coverage"
   );
+  const entryInspectionNeeded = alerts.filter(
+    (a): a is Extract<DashboardAlert, { kind: "entry_inspection_needed" }> =>
+      a.kind === "entry_inspection_needed"
+  );
   const endApproaching = alerts.filter(
     (a): a is Extract<DashboardAlert, { kind: "lease_end_approaching" }> =>
       a.kind === "lease_end_approaching"
@@ -75,6 +79,28 @@ export default async function DashboardPage({
                     ? td("lowCoverageUntil", { date: alert.coverageEndDate })
                     : td("lowCoverageNoSchedule")}
                 </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {entryInspectionNeeded.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{td("entryInspectionNeededTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {entryInspectionNeeded.map((alert) => (
+              <Link
+                key={alert.leaseId}
+                href={`/leases/${alert.leaseId}`}
+                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
+              >
+                <span className="font-medium">
+                  {alert.propertyName} — {alert.tenantName}
+                </span>
+                <span className="text-muted-foreground">{td("entryInspectionNeeded")}</span>
               </Link>
             ))}
           </CardContent>

@@ -36,6 +36,12 @@ type Props = {
   // ci-dessous, qui ne couvre que l'anticipation côté client avant toute
   // écriture.
   closureEngaged: boolean;
+  // Module 10g : un bail sans état des lieux d'entrée finalisé bloquera
+  // plus tard toute imputation dégâts (private.validate_deposit_ledger_
+  // damage_imputation_requires_inspections, Module 6) — prime sur
+  // endDateApproaching (Volet B), jamais revérifié une fois closureEngaged
+  // (les bandeaux de clôture sont alors plus actionnables).
+  entryInspectionDone: boolean;
   endDateApproaching: boolean;
   endDate: string | null;
   keysReturnedAt: string | null;
@@ -58,6 +64,7 @@ type Props = {
 export function LeaseLifecycleBanner({
   leaseId,
   closureEngaged,
+  entryInspectionDone,
   endDateApproaching,
   endDate,
   keysReturnedAt,
@@ -82,6 +89,10 @@ export function LeaseLifecycleBanner({
     return (
       <ExitInspectionDueBanner leaseId={leaseId} dueDate={exitInspectionDueDate} />
     );
+  }
+
+  if (!entryInspectionDone) {
+    return <EntryInspectionDueBanner leaseId={leaseId} />;
   }
 
   if (endDateApproaching) {
@@ -145,6 +156,34 @@ function LeaseEndingBanner({
 
         <Button type="button" variant="outline" className="w-fit" onClick={onStartClosure}>
           {t("startClosure")}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ----------------------------------------------------------------------------
+// Module 10g — état des lieux d'entrée manquant, tant que le bail n'est
+// pas engagé en clôture. Pas de fenêtre de délai (contrairement à
+// ExitInspectionDueBanner) : leases_closure_status ne calcule aucun seuil
+// côté entrée, seulement l'existence d'un document finalisé.
+// ----------------------------------------------------------------------------
+
+function EntryInspectionDueBanner({ leaseId }: { leaseId: string }) {
+  const t = useTranslations("leases");
+
+  return (
+    <Card className="max-w-md border-amber-500/50">
+      <CardHeader>
+        <CardTitle className="text-base">{t("entryInspectionDueBanner")}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button
+          className="w-fit"
+          render={<Link href={`/leases/${leaseId}/inspections/new?type=entree`} />}
+          nativeButton={false}
+        >
+          {t("createEntryInspection")}
         </Button>
       </CardContent>
     </Card>
