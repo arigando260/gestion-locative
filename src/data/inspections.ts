@@ -27,6 +27,37 @@ export async function getInspectionsForLease(
   return data;
 }
 
+// Un brouillon existant (du même type si précisé, sinon tout type) doit
+// être complété/finalisé, pas dupliqué : le trigger anti-doublon
+// (private.validate_property_inspection_not_duplicate, Module 6f)
+// refuserait de toute façon un second brouillon non contesté du même type.
+// Sert à rediriger /leases/{id}/inspections/new avant même d'afficher un
+// formulaire voué à échouer à la soumission — voir app/[locale]/(dashboard)/
+// leases/[leaseId]/inspections/new/page.tsx.
+export async function getDraftInspectionForLease(
+  leaseId: string,
+  inspectionType?: "entree" | "sortie"
+): Promise<InspectionWithEffectiveStatus | null> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("property_inspections_effective_status")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .eq("document_status", "brouillon");
+
+  if (inspectionType) {
+    query = query.eq("inspection_type", inspectionType);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getInspection(
   id: string
 ): Promise<InspectionWithEffectiveStatus | null> {
