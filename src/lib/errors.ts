@@ -4,6 +4,8 @@ import { getTranslations } from "next-intl/server";
 type PostgrestLikeError = {
   code?: string | null;
   message?: string | null;
+  details?: string | null;
+  hint?: string | null;
 } | null;
 
 const KNOWN_CODE_KEYS: Record<string, string> = {
@@ -28,5 +30,13 @@ export async function toUserMessage(error: PostgrestLikeError): Promise<string> 
   if (error.code === "P0001" && error.message) return error.message;
 
   const key = error.code ? KNOWN_CODE_KEYS[error.code] : undefined;
-  return key ? t(key) : t("generic");
+  if (key) return t(key);
+
+  console.error("toUserMessage: code non reconnu", {
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+  });
+  return t("generic");
 }
