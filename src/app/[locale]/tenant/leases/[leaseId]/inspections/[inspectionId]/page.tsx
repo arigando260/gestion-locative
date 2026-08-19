@@ -28,7 +28,14 @@ export default async function TenantInspectionDetailPage({
   const t = await getTranslations("inspections");
   const tc = await getTranslations("common");
 
-  const isPending = inspection.effective_validation_status === "en_attente";
+  // Défense en profondeur : RLS (Module 6k) empêche déjà la lecture d'un
+  // brouillon par le locataire (getInspection renverrait null, notFound()
+  // ci-dessus) et bloque l'écriture de tenant_validation_status avant
+  // finalisation — cette condition ne devrait donc jamais être atteinte
+  // par un brouillon, mais le formulaire ne doit pas en dépendre seul.
+  const isPending =
+    inspection.document_status === "finalise" &&
+    inspection.effective_validation_status === "en_attente";
 
   return (
     <div className="flex flex-col gap-6">
