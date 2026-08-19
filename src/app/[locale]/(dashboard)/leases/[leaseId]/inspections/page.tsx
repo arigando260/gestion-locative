@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
-import { getInspectionsForLease } from "@/data/inspections";
+import { getInspectionsForLease, getAvailableInspectionTypes } from "@/data/inspections";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { InspectionList } from "@/components/inspections/inspection-list";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,10 @@ export default async function LeaseInspectionsPage({
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
-  const [inspections, permissions] = await Promise.all([
+  const [inspections, permissions, availableTypes] = await Promise.all([
     getInspectionsForLease(leaseId),
     getCurrentUserPermissions(),
+    getAvailableInspectionTypes(leaseId),
   ]);
 
   const t = await getTranslations("inspections");
@@ -32,11 +33,14 @@ export default async function LeaseInspectionsPage({
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">{t("title")}</h1>
-        {can(permissions, "property_inspections", "create") && (
-          <Button render={<Link href={`/leases/${leaseId}/inspections/new`} />} nativeButton={false}>
-            {t("create")}
-          </Button>
-        )}
+        {can(permissions, "property_inspections", "create") &&
+          (availableTypes.length > 0 ? (
+            <Button render={<Link href={`/leases/${leaseId}/inspections/new`} />} nativeButton={false}>
+              {t("create")}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("noAvailableTypes")}</p>
+          ))}
       </div>
       <InspectionList
         inspections={inspections}

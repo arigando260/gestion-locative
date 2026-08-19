@@ -13,13 +13,18 @@ import { useLocale } from "next-intl";
 export function InspectionForm({
   leaseId,
   defaultType,
+  availableTypes,
 }: {
   leaseId: string;
   // Présélection depuis un lien direct (ex: bandeau de clôture, Module 10
   // Volet C — "?type=sortie") — une valeur absente/invalide laisse le
   // champ sur son comportement normal (voir SelectField, premier
-  // élément par défaut).
+  // élément par défaut). Si absent des types disponibles, SelectField se
+  // recale de lui-même sur le premier type disponible (useEffect existant).
   defaultType?: "entree" | "sortie";
+  // Voir data/inspections.ts getAvailableInspectionTypes — n'inclut que
+  // les types que la base accepterait réellement à la soumission.
+  availableTypes: ("entree" | "sortie")[];
 }) {
   const t = useTranslations("inspections");
   const tc = useTranslations("common");
@@ -37,7 +42,7 @@ export function InspectionForm({
         options={[
           { value: "entree", label: t("typeEntree") },
           { value: "sortie", label: t("typeSortie") },
-        ]}
+        ].filter((option) => availableTypes.includes(option.value as "entree" | "sortie"))}
       />
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inspection_date">{t("inspectionDate")}</Label>

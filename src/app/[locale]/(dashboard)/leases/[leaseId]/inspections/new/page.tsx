@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
-import { getDraftInspectionForLease } from "@/data/inspections";
+import { getDraftInspectionForLease, getAvailableInspectionTypes } from "@/data/inspections";
 import { InspectionForm } from "@/components/inspections/inspection-form";
 
 export default async function NewInspectionPage({
@@ -23,12 +23,17 @@ export default async function NewInspectionPage({
     redirect({ href: `/leases/${leaseId}/inspections/${draft.id}`, locale });
   }
 
+  const availableTypes = await getAvailableInspectionTypes(leaseId);
   const t = await getTranslations("inspections");
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold">{t("createTitle")}</h1>
-      <InspectionForm leaseId={lease.id} defaultType={defaultType} />
+      {availableTypes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("noAvailableTypes")}</p>
+      ) : (
+        <InspectionForm leaseId={lease.id} defaultType={defaultType} availableTypes={availableTypes} />
+      )}
     </div>
   );
 }

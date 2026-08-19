@@ -27,6 +27,47 @@ export async function getInspectionsForLease(
   return data;
 }
 
+const INSPECTION_TYPES = ["entree", "sortie"] as const;
+export type InspectionTypeValue = (typeof INSPECTION_TYPES)[number];
+
+// Types encore disponibles à la création pour ce bail — un type est
+// disponible si aucun état des lieux de ce type n'existe encore, ou si le
+// plus récent a été contesté par le locataire. Même requête en lecture que
+// le trigger private.validate_property_inspection_not_duplicate (Module
+// 6f) : NE PAS recalculer via getInspectionsForLease, qui trie par
+// inspection_date (affichage) — le trigger, et donc cette fonction,
+// trient par created_at, seul ordre qui garantit de désigner la même ligne
+// que la base retiendrait à l'écriture. DISTINCT ON (inspection_type)
+// n'est pas exprimable via PostgREST : la ligne la plus récente par type
+// est prise manuellement ci-dessous, sur un jeu de données nécessairement
+// petit (au plus quelques états des lieux par bail).
+export async function getAvailableInspectionTypes(
+  leaseId: string
+): Promise<InspectionTypeValue[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("property_inspections_effective_status")
+    .select("inspection_type, effective_validation_status")
+    .eq("lease_id", leaseId)
+    .order("inspection_type", { ascending: true })
+    .order("created_at", { ascending: false })
+    .returns<Pick<InspectionWithEffectiveStatus, "inspection_type" | "effective_validation_status">[]>();
+
+  if (error) throw error;
+
+  const latestStatusByType = new Map<string, string | null>();
+  for (const row of data ?? []) {
+    if (row.inspection_type && !latestStatusByType.has(row.inspection_type)) {
+      latestStatusByType.set(row.inspection_type, row.effective_validation_status);
+    }
+  }
+
+  return INSPECTION_TYPES.filter((type) => {
+    const status = latestStatusByType.get(type);
+    return status === undefined || status === "conteste";
+  });
+}
+
 // Un brouillon existant (du même type si précisé, sinon tout type) doit
 // être complété/finalisé, pas dupliqué : le trigger anti-doublon
 // (private.validate_property_inspection_not_duplicate, Module 6f)
