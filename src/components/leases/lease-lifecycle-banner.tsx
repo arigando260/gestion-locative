@@ -30,6 +30,14 @@ const VALIDATION_KEY: Record<string, string> = {
 
 type Props = {
   leaseId: string;
+  // Borne basse pour la restitution des clés — contrôlée uniquement côté
+  // action (recordKeysReturnedAction), pas de min sur l'input natif (voir
+  // RecordKeysReturnedBanner). Module 10i : date de validation de la
+  // résiliation (resilie) ou end_date (actif, Volet B) — NULL si aucune
+  // référence connue (dont le cas orphelin, voir data/lease-closure.ts),
+  // auquel cas seule la contrainte CHECK leases_keys_returned_after_start
+  // protège a minima.
+  closureReferenceDate: string | null;
   // "Clôture engagée" (voir data/lease-closure.ts isLeaseClosureEngaged) :
   // calculée côté serveur à partir de données réelles (status='resilie' ou
   // keys_returned_at renseigné) — prime toujours sur closureRevealed
@@ -63,6 +71,7 @@ type Props = {
 // ci-dessous, closureEngaged (donnée serveur) reste faux.
 export function LeaseLifecycleBanner({
   leaseId,
+  closureReferenceDate,
   closureEngaged,
   entryInspectionDone,
   endDateApproaching,
@@ -84,7 +93,9 @@ export function LeaseLifecycleBanner({
       );
     }
     if (keysReturnedAt === null) {
-      return <RecordKeysReturnedBanner leaseId={leaseId} />;
+      return (
+        <RecordKeysReturnedBanner leaseId={leaseId} closureReferenceDate={closureReferenceDate} />
+      );
     }
     return (
       <ExitInspectionDueBanner leaseId={leaseId} dueDate={exitInspectionDueDate} />
@@ -97,7 +108,9 @@ export function LeaseLifecycleBanner({
 
   if (endDateApproaching) {
     if (closureRevealed) {
-      return <RecordKeysReturnedBanner leaseId={leaseId} />;
+      return (
+        <RecordKeysReturnedBanner leaseId={leaseId} closureReferenceDate={closureReferenceDate} />
+      );
     }
     return (
       <LeaseEndingBanner
@@ -194,10 +207,27 @@ function EntryInspectionDueBanner({ leaseId }: { leaseId: string }) {
 // Volet C — restitution des clés → état des lieux de sortie → clôture.
 // ----------------------------------------------------------------------------
 
-function RecordKeysReturnedBanner({ leaseId }: { leaseId: string }) {
+function RecordKeysReturnedBanner({
+  leaseId,
+  closureReferenceDate,
+}: {
+  leaseId: string;
+  closureReferenceDate: string | null;
+}) {
   const t = useTranslations("leases");
   const tc = useTranslations("common");
   const [state, formAction] = useActionState(recordKeysReturnedAction, null);
+  const today = new Date().toISOString().slice(0, 10);
+  const [dateValue, setDateValue] = useState(today);
+
+  // Avertissement non bloquant, purement informatif : si la date choisie
+  // est déjà à plus de 7 jours dans le passé, la fenêtre de l'état des
+  // lieux de sortie (keys_returned_at + 7, voir exit_inspection_due_date)
+  // sera déjà expirée au moment de l'enregistrement — reste une saisie
+  // légitime (retard administratif), donc aucun blocage serveur associé.
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const showOldDateWarning = dateValue < sevenDaysAgo.toISOString().slice(0, 10);
 
   return (
     <Card className="max-w-md border-amber-500/50">
@@ -207,18 +237,26 @@ function RecordKeysReturnedBanner({ leaseId }: { leaseId: string }) {
       <CardContent>
         <form action={formAction} className="flex flex-col gap-2">
           <input type="hidden" name="lease_id" value={leaseId} />
+          {closureReferenceDate && (
+            <input type="hidden" name="closure_reference_date" value={closureReferenceDate} />
+          )}
           <Label htmlFor="keys_returned_at">{t("keysReturnedAtLabel")}</Label>
           <div className="flex items-center gap-2">
             <Input
               id="keys_returned_at"
               name="keys_returned_at"
               type="date"
-              defaultValue={new Date().toISOString().slice(0, 10)}
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              max={today}
               className="w-fit"
               required
             />
             <SubmitButton pendingText={tc("loading")}>{t("recordKeysReturned")}</SubmitButton>
           </div>
+          {showOldDateWarning && (
+            <p className="text-sm text-amber-600">{t("keysReturnedOldDateWarning")}</p>
+          )}
           <FormMessage state={state} />
         </form>
       </CardContent>

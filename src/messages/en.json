@@ -105,6 +105,7 @@
     "keysReturnedAtLabel": "Key return date",
     "recordKeysReturned": "Record key return",
     "keysReturnedRecorded": "Key return recorded.",
+    "keysReturnedOldDateWarning": "Warning: the 7-day window for the move-out inspection will already have expired by this date.",
     "exitInspectionDueBanner": "Exit inspection to complete before {date}.",
     "exitInspectionDueBannerNoDate": "Exit inspection to complete.",
     "createExitInspection": "Create exit inspection",

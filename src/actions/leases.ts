@@ -166,9 +166,36 @@ export async function recordKeysReturnedAction(
 
   const lease_id = String(formData.get("lease_id") ?? "");
   const date = String(formData.get("keys_returned_at") ?? "").trim();
+  const closure_reference_date = String(formData.get("closure_reference_date") ?? "").trim();
 
   if (!lease_id || !date) {
     return { success: false, message: "Merci de renseigner une date." };
+  }
+
+  // Défense en profondeur : la contrainte leases_keys_returned_after_start
+  // (CHECK, Module 6) reste la vraie autorité et continue seule de protéger
+  // a minima quand closure_reference_date est absente (champ caché non
+  // envoyé, voir RecordKeysReturnedBanner — NULL côté vue, dont le cas
+  // orphelin, Module 10i) : ce contrôle-ci évite seulement le message
+  // générique de contrainte pour le cas précis, connu et fréquent, où la
+  // référence de clôture (validation de résiliation ou end_date) est
+  // disponible (comparaison de chaînes ISO 8601 valide lexicographiquement).
+  if (closure_reference_date && date < closure_reference_date) {
+    return {
+      success: false,
+      message: `La date de restitution ne peut pas être antérieure au ${closure_reference_date}, date à laquelle la clôture de ce bail a été engagée.`,
+    };
+  }
+
+  // Défense en profondeur : la contrainte leases_keys_returned_not_future
+  // (CHECK, Module 10h) reste la vraie autorité — même principe que la
+  // borne basse ci-dessus.
+  const today = new Date().toISOString().slice(0, 10);
+  if (date > today) {
+    return {
+      success: false,
+      message: "La date de restitution ne peut pas être dans le futur.",
+    };
   }
 
   const { error } = await recordKeysReturned(lease_id, date);

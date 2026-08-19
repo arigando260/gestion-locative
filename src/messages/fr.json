@@ -105,6 +105,7 @@
     "keysReturnedAtLabel": "Date de restitution des clés",
     "recordKeysReturned": "Enregistrer la restitution des clés",
     "keysReturnedRecorded": "Restitution des clés enregistrée.",
+    "keysReturnedOldDateWarning": "Attention : la fenêtre de 7 jours pour l'état des lieux de sortie sera déjà expirée à cette date.",
     "exitInspectionDueBanner": "État des lieux de sortie à réaliser avant le {date}.",
     "exitInspectionDueBannerNoDate": "État des lieux de sortie à réaliser.",
     "createExitInspection": "Créer l'état des lieux de sortie",

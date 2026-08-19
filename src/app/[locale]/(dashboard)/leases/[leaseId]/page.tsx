@@ -198,6 +198,7 @@ export default async function LeasePage({
       {closureStatus && can(permissions, "leases", "update") && (
         <LeaseLifecycleBanner
           leaseId={lease.id}
+          closureReferenceDate={closureStatus.closure_reference_date}
           closureEngaged={isLeaseClosureEngaged(closureStatus)}
           entryInspectionDone={closureStatus.entry_inspection_done}
           endDateApproaching={

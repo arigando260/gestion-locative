@@ -20,6 +20,12 @@ export type LeaseClosureStatus = {
   latest_finalized_entry_inspection_id: string | null;
   latest_finalized_entry_inspection_date: string | null;
   entry_inspection_done: boolean;
+  // Module 10i : responded_at (resilie) / end_date (actif) / NULL sinon —
+  // voir supabase/migrations/20260805430000_module10i_closure_reference_date.sql.
+  // NULL couvre aussi le cas orphelin (bail resilie sans lease_termination_
+  // requests validee associée) : à traiter comme "aucune borne connue",
+  // jamais comme une erreur.
+  closure_reference_date: string | null;
 };
 
 // Seuil d'affichage du bandeau "fin de bail" (Volet B) — décision
