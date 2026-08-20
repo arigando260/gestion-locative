@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDate } from "@/lib/format-date";
 import type { ScheduleWithEffectiveStatus } from "@/data/schedules";
 
 const STATUS_KEY: Record<string, string> = {
@@ -35,6 +36,7 @@ export async function ScheduleTable({
   schedules: ScheduleWithEffectiveStatus[];
 }) {
   const t = await getTranslations("schedules");
+  const locale = await getLocale();
 
   if (schedules.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
@@ -43,8 +45,8 @@ export async function ScheduleTable({
   const row = (schedule: ScheduleWithEffectiveStatus) => {
     const statusKey = STATUS_KEY[schedule.effective_status ?? ""] ?? "statusEnAttente";
     return {
-      period: `${schedule.period_start_date} → ${schedule.period_end_date}`,
-      due: schedule.due_date,
+      period: `${formatDate(schedule.period_start_date, locale)} → ${formatDate(schedule.period_end_date, locale)}`,
+      due: formatDate(schedule.due_date, locale),
       amount: schedule.amount_due,
       statusLabel: t(statusKey),
       variant: STATUS_VARIANT[schedule.effective_status ?? ""] ?? "secondary",

@@ -1,6 +1,6 @@
 import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import {
   Table,
   TableBody,
@@ -81,7 +81,7 @@ export async function LeaseTerminationList({
                     </Link>
                   </TableCell>
                   <TableCell>{r.initiator}</TableCell>
-                  <TableCell>{request.requested_end_date}</TableCell>
+                  <TableCell>{formatDate(request.requested_end_date, locale)}</TableCell>
                   <TableCell>
                     <Badge variant={r.statusVariant}>{r.statusLabel}</Badge>
                   </TableCell>
@@ -107,7 +107,7 @@ export async function LeaseTerminationList({
                     {t("initiatedBy")}: {r.initiator}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {t("requestedEndDate")}: {request.requested_end_date}
+                    {t("requestedEndDate")}: {formatDate(request.requested_end_date, locale)}
                   </span>
                   <span className="text-sm text-muted-foreground">{r.createdAt}</span>
                 </CardContent>

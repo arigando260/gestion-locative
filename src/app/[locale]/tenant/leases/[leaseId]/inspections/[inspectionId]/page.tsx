@@ -5,7 +5,7 @@ import { getMyLease } from "@/data/leases";
 import { getInspection, getInspectionItemsWithPhotos } from "@/data/inspections";
 import { InspectionItemCard } from "@/components/inspections/inspection-item-card";
 import { TenantValidationForm } from "@/components/inspections/tenant-validation-form";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -50,7 +50,7 @@ export default async function TenantInspectionDetailPage({
       <Card className="max-w-md">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>
-            {t(TYPE_KEY[inspection.inspection_type ?? ""] ?? "typeEntree")} — {inspection.inspection_date}
+            {t(TYPE_KEY[inspection.inspection_type ?? ""] ?? "typeEntree")} — {formatDate(inspection.inspection_date, locale)}
           </CardTitle>
           <Badge variant="secondary">
             {t(VALIDATION_KEY[inspection.effective_validation_status ?? ""] ?? "validationEnAttente")}

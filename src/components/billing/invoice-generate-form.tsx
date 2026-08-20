@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { generateScheduleInvoiceAction } from "@/actions/schedule-invoices";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
+import { formatDate } from "@/lib/format-date";
 import type { ScheduleWithEffectiveStatus } from "@/data/schedules";
 
 // Facturation groupée (Module 9) : sélection libre parmi les échéances de
@@ -23,6 +24,7 @@ export function InvoiceGenerateForm({
   const t = useTranslations("billing");
   const ts = useTranslations("schedules");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [state, formAction] = useActionState(generateScheduleInvoiceAction, null);
 
   if (schedules.length === 0) {
@@ -47,7 +49,7 @@ export function InvoiceGenerateForm({
               className="size-4"
             />
             <span>
-              {schedule.period_start_date} → {schedule.period_end_date} — {schedule.amount_due}
+              {formatDate(schedule.period_start_date, locale)} → {formatDate(schedule.period_end_date, locale)} — {schedule.amount_due}
             </span>
           </Label>
         ))}

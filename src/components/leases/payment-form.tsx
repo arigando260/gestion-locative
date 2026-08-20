@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { recordPaymentAction } from "@/actions/payments";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/forms/select-field";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
+import { formatDate } from "@/lib/format-date";
 import type { ScheduleWithEffectiveStatus } from "@/data/schedules";
 import {
   Card,
@@ -26,6 +27,7 @@ export function PaymentForm({
   const t = useTranslations("payments");
   const ts = useTranslations("schedules");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [state, formAction] = useActionState(recordPaymentAction, null);
 
   // Une échéance déjà soldée ou annulée n'a pas de raison de recevoir un
@@ -49,7 +51,7 @@ export function PaymentForm({
             label={ts("title")}
             options={eligible.map((s) => ({
               value: s.id!,
-              label: `${s.period_start_date} → ${s.period_end_date} (${s.amount_due})`,
+              label: `${formatDate(s.period_start_date, locale)} → ${formatDate(s.period_end_date, locale)} (${s.amount_due})`,
             }))}
           />
           <div className="flex flex-col gap-1.5">

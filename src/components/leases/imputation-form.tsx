@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { recordImputationAction } from "@/actions/deposits";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/forms/select-field";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
+import { formatDate } from "@/lib/format-date";
 import type { ScheduleWithEffectiveStatus } from "@/data/schedules";
 
 export function ImputationForm({
@@ -24,6 +25,7 @@ export function ImputationForm({
 }) {
   const t = useTranslations("deposits");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [state, formAction] = useActionState(recordImputationAction, null);
   const [category, setCategory] = useState("loyer");
 
@@ -56,7 +58,7 @@ export function ImputationForm({
           label={t("scheduleToSettle")}
           options={eligibleSchedules.map((s) => ({
             value: s.id!,
-            label: `${s.period_start_date} → ${s.period_end_date} (${s.amount_due})`,
+            label: `${formatDate(s.period_start_date, locale)} → ${formatDate(s.period_end_date, locale)} (${s.amount_due})`,
           }))}
         />
       )}

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   updateLeaseEndDateAction,
   recordKeysReturnedAction,
   closeLeaseDefinitivelyAction,
 } from "@/actions/leases";
+import { formatDate } from "@/lib/format-date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -163,13 +164,14 @@ function LeaseEndingBanner({
 }) {
   const t = useTranslations("leases");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [state, formAction] = useActionState(updateLeaseEndDateAction, null);
 
   return (
     <Card className="max-w-md border-amber-500/50">
       <CardHeader>
         <CardTitle className="text-base">
-          {endDate ? t("leaseEndingBanner", { date: endDate }) : t("leaseEndingBannerNoDate")}
+          {endDate ? t("leaseEndingBanner", { date: formatDate(endDate, locale) }) : t("leaseEndingBannerNoDate")}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -296,12 +298,13 @@ function ExitInspectionDueBanner({
   dueDate: string | null;
 }) {
   const t = useTranslations("leases");
+  const locale = useLocale();
 
   return (
     <Card className="max-w-md border-amber-500/50">
       <CardHeader>
         <CardTitle className="text-base">
-          {dueDate ? t("exitInspectionDueBanner", { date: dueDate }) : t("exitInspectionDueBannerNoDate")}
+          {dueDate ? t("exitInspectionDueBanner", { date: formatDate(dueDate, locale) }) : t("exitInspectionDueBannerNoDate")}
         </CardTitle>
       </CardHeader>
       <CardContent>

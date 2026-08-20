@@ -6,7 +6,7 @@ import {
   getMyLeaseTerminationRequest,
   isLeaseTerminationInitiator,
 } from "@/data/lease-terminations";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { RespondForm } from "@/components/lease-terminations/respond-form";
 import { CancelButton } from "@/components/lease-terminations/cancel-button";
 import { DepositRefundNotice } from "@/components/lease-terminations/deposit-refund-notice";
@@ -85,7 +85,7 @@ export default async function TenantLeaseTerminationPage({
             {t("initiatedBy")}: {t(tenantInitiated ? "initiatorTenant" : "initiatorStaff")}
           </p>
           <p>
-            {t("requestedEndDate")}: {request.requested_end_date}
+            {t("requestedEndDate")}: {formatDate(request.requested_end_date, locale)}
           </p>
           <p>{t("reason")}: {request.reason}</p>
           <p className="text-muted-foreground">

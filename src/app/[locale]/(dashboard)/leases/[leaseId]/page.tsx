@@ -23,7 +23,7 @@ import {
   leaseEndApproachingThresholdDate,
 } from "@/data/lease-closure";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
 import { PaymentForm } from "@/components/leases/payment-form";
@@ -185,7 +185,7 @@ export default async function LeasePage({
             {t("paymentTiming")}: {t(`timing${capitalize(lease.payment_timing)}`)}
           </p>
           <p>
-            {t("startDate")}: {lease.start_date}
+            {t("startDate")}: {formatDate(lease.start_date, locale)}
           </p>
         </CardContent>
       </Card>

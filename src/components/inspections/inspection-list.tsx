@@ -1,5 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { formatDate } from "@/lib/format-date";
 import {
   Table,
   TableBody,
@@ -43,6 +44,7 @@ export async function InspectionList({
   basePath: string;
 }) {
   const t = await getTranslations("inspections");
+  const locale = await getLocale();
 
   if (inspections.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
@@ -50,7 +52,7 @@ export async function InspectionList({
 
   const row = (inspection: InspectionWithEffectiveStatus) => ({
     typeLabel: t(TYPE_KEY[inspection.inspection_type ?? ""] ?? "typeEntree"),
-    date: inspection.inspection_date,
+    date: formatDate(inspection.inspection_date, locale),
     documentLabel: t(DOCUMENT_STATUS_KEY[inspection.document_status ?? ""] ?? "documentStatusBrouillon"),
     validationLabel: t(VALIDATION_KEY[inspection.effective_validation_status ?? ""] ?? "validationEnAttente"),
     variant: VALIDATION_VARIANT[inspection.effective_validation_status ?? ""] ?? "secondary",

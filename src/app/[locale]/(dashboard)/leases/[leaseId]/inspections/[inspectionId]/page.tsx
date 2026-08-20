@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getInspection, getInspectionItemsWithPhotos } from "@/data/inspections";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
-import { formatDateTime } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import { InspectionItemForm } from "@/components/inspections/inspection-item-form";
 import { InspectionItemCard } from "@/components/inspections/inspection-item-card";
 import { FinalizeInspectionForm } from "@/components/inspections/finalize-inspection-form";
@@ -48,7 +48,7 @@ export default async function InspectionDetailPage({
       <Card className="max-w-md">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>
-            {t(TYPE_KEY[inspection.inspection_type ?? ""] ?? "typeEntree")} — {inspection.inspection_date}
+            {t(TYPE_KEY[inspection.inspection_type ?? ""] ?? "typeEntree")} — {formatDate(inspection.inspection_date, locale)}
           </CardTitle>
           <Badge variant="secondary">
             {t(DOCUMENT_STATUS_KEY[inspection.document_status ?? ""] ?? "documentStatusBrouillon")}

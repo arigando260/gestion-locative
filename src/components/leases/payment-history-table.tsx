@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
+import { formatDate } from "@/lib/format-date";
 import {
   getOrGeneratePaymentReceiptUrlAction,
   getTenantPaymentReceiptUrlAction,
@@ -36,6 +37,7 @@ export async function PaymentHistoryTable({
   variant: "staff" | "tenant";
 }) {
   const t = await getTranslations("payments");
+  const locale = await getLocale();
 
   if (payments.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
@@ -72,7 +74,7 @@ export async function PaymentHistoryTable({
           <TableBody>
             {payments.map((payment) => (
               <TableRow key={payment.id}>
-                <TableCell>{payment.payment_date}</TableCell>
+                <TableCell>{formatDate(payment.payment_date, locale)}</TableCell>
                 <TableCell>{payment.amount}</TableCell>
                 <TableCell>{t(METHOD_KEY[payment.method] ?? "methodEspeces")}</TableCell>
                 <TableCell>{payment.external_reference ?? "—"}</TableCell>
@@ -88,7 +90,7 @@ export async function PaymentHistoryTable({
             <CardContent className="flex flex-col gap-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">{payment.amount}</span>
-                <span className="text-sm text-muted-foreground">{payment.payment_date}</span>
+                <span className="text-sm text-muted-foreground">{formatDate(payment.payment_date, locale)}</span>
               </div>
               <span className="text-sm text-muted-foreground">
                 {t(METHOD_KEY[payment.method] ?? "methodEspeces")}

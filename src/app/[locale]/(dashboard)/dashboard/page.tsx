@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/data/session";
 import { getCurrentUserPermissions } from "@/data/permissions";
 import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
+import { formatDate } from "@/lib/format-date";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,7 +88,7 @@ export default async function DashboardPage({
                 </span>
                 <span className="text-muted-foreground">
                   {alert.coverageEndDate
-                    ? td("lowCoverageUntil", { date: alert.coverageEndDate })
+                    ? td("lowCoverageUntil", { date: formatDate(alert.coverageEndDate, locale) })
                     : td("lowCoverageNoSchedule")}
                 </span>
               </Link>
@@ -134,7 +135,7 @@ export default async function DashboardPage({
                   {alert.propertyName} — {alert.tenantName}
                 </span>
                 <span className="text-muted-foreground">
-                  {td("upcomingEndDateUntil", { date: alert.endDate })}
+                  {td("upcomingEndDateUntil", { date: formatDate(alert.endDate, locale) })}
                 </span>
               </Link>
             ))}
@@ -160,7 +161,7 @@ export default async function DashboardPage({
                 <span className="text-muted-foreground">
                   {alert.subKind === "keys_needed" && td("closurePendingKeysNeeded")}
                   {alert.subKind === "inspection_needed" &&
-                    td("closurePendingInspectionNeeded", { date: alert.dueDate ?? "—" })}
+                    td("closurePendingInspectionNeeded", { date: formatDate(alert.dueDate, locale) })}
                   {alert.subKind === "ready" && td("closurePendingReady")}
                 </span>
               </Link>

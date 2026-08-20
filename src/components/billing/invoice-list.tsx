@@ -1,7 +1,8 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { getSignedScheduleInvoiceUrlAction } from "@/actions/schedule-invoices";
+import { formatDateTime } from "@/lib/format-date";
 import type { ScheduleInvoice } from "@/data/schedule-invoices";
 
 // Partagée staff/locataire (comme PaymentHistoryTable) : aucune génération
@@ -11,6 +12,7 @@ import type { ScheduleInvoice } from "@/data/schedule-invoices";
 // le fichier.
 export async function InvoiceList({ invoices }: { invoices: ScheduleInvoice[] }) {
   const t = await getTranslations("billing");
+  const locale = await getLocale();
 
   if (invoices.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("noInvoices")}</p>;
@@ -22,7 +24,7 @@ export async function InvoiceList({ invoices }: { invoices: ScheduleInvoice[] })
         <Card key={invoice.id}>
           <CardContent className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">
-              {t("invoiceGeneratedOn")}: {invoice.generated_at.slice(0, 16).replace("T", " ")}
+              {t("invoiceGeneratedOn")}: {formatDateTime(invoice.generated_at, locale)}
             </span>
             <DocumentDownloadButton
               action={getSignedScheduleInvoiceUrlAction.bind(null, invoice.storage_path)}
