@@ -24,6 +24,7 @@ export async function InspectionItemCard({
     id: photo.id,
     storage_path: photo.storage_path,
     url: signedUrls[photo.storage_path] ?? null,
+    uploaded_at: photo.uploaded_at,
   }));
 
   return (

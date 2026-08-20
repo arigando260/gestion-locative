@@ -8,6 +8,7 @@ import {
   getMaintenanceTicketImputations,
 } from "@/data/maintenance";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { formatDateTime } from "@/lib/format-date";
 import { TicketStatusControl } from "@/components/maintenance/ticket-status-control";
 import { TicketCostFields } from "@/components/maintenance/ticket-cost-fields";
 import { TicketPhotoGallery } from "@/components/maintenance/ticket-photo-gallery";
@@ -31,7 +32,7 @@ const PRIORITY_KEY: Record<MaintenanceTicketPriority, string> = {
 export default async function MaintenanceTicketPage({
   params,
 }: PageProps<"/[locale]/maintenance/[ticketId]">) {
-  const { ticketId } = await params;
+  const { locale, ticketId } = await params;
   const [ticket, permissions] = await Promise.all([
     getMaintenanceTicket(ticketId),
     getCurrentUserPermissions(),
@@ -79,6 +80,11 @@ export default async function MaintenanceTicketPage({
           <p className="text-muted-foreground">
             {t("createdAt")}: {ticket.created_at.slice(0, 10)}
           </p>
+          {ticket.resolved_at && (
+            <p className="text-muted-foreground">
+              {t("resolvedAt", { date: formatDateTime(ticket.resolved_at, locale) })}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -98,6 +104,7 @@ export default async function MaintenanceTicketPage({
           id: photo.id,
           storage_path: photo.storage_path,
           url: signedUrls[photo.storage_path] ?? null,
+          uploaded_at: photo.uploaded_at,
         }))}
         canUpload={canUpdate}
         canDelete={canDelete}

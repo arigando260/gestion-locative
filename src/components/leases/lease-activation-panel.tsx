@@ -1,9 +1,10 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
+import { formatDateTime } from "@/lib/format-date";
 import type { LeaseActivationReadiness } from "@/data/lease-contracts";
 import type { DepositBalance } from "@/data/deposits";
 import type { Lease } from "@/data/leases";
@@ -38,6 +39,7 @@ export async function LeaseActivationPanel({
 }) {
   const t = await getTranslations("leases");
   const td = await getTranslations("deposits");
+  const locale = await getLocale();
 
   const depositsComplete = readiness?.deposits_complete ?? false;
   const contractGenerated = readiness?.contract_id != null;
@@ -92,6 +94,14 @@ export async function LeaseActivationPanel({
               label={t("viewContract")}
               pendingLabel={t("generatingContract")}
             />
+            <p className="text-sm text-muted-foreground">
+              {t("contractGeneratedOn", { date: formatDateTime(readiness?.contract_generated_at, locale) })}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {readiness?.contract_first_viewed_at
+                ? t("contractViewedOn", { date: formatDateTime(readiness.contract_first_viewed_at, locale) })
+                : t("contractNotYetViewed")}
+            </p>
             <p className="text-sm text-muted-foreground">{t("awaitingTenantApproval")}</p>
           </>
         )}

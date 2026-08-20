@@ -34,6 +34,7 @@ export async function LeaseContractApproval({
           leaseId={leaseId}
           depositsComplete={depositsComplete}
           initiallyViewed={readiness?.contract_first_viewed_at != null}
+          firstViewedAt={readiness?.contract_first_viewed_at ?? null}
         />
       </CardContent>
     </Card>

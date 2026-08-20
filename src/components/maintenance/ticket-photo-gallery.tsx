@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage, hashBlob, buildMaintenanceTicketPhotoPath } from "@/lib/photo-upload";
 import {
@@ -9,8 +9,14 @@ import {
   deleteMaintenanceTicketPhotoAction,
 } from "@/actions/maintenance";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/format-date";
 
-export type GalleryPhoto = { id: string; storage_path: string; url: string | null };
+export type GalleryPhoto = {
+  id: string;
+  storage_path: string;
+  url: string | null;
+  uploaded_at: string;
+};
 
 type UploadStage = "idle" | "busy" | "error-upload" | "error-confirm";
 
@@ -40,6 +46,7 @@ export function TicketPhotoGallery({
   lockedMessage?: string;
 }) {
   const t = useTranslations("maintenance");
+  const locale = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingRef = useRef<{ path: string; hash: string } | null>(null);
   const [stage, setStage] = useState<UploadStage>("idle");
@@ -142,6 +149,9 @@ export function TicketPhotoGallery({
                   alt=""
                   className="h-24 w-24 rounded-md object-cover"
                 />
+                <span className="text-xs text-muted-foreground">
+                  {t("photoUploadedOn", { date: formatDateTime(photo.uploaded_at, locale) })}
+                </span>
                 {canDelete && !locked && (
                   <Button
                     type="button"

@@ -5,6 +5,7 @@ import { getMyLease } from "@/data/leases";
 import { getInspection, getInspectionItemsWithPhotos } from "@/data/inspections";
 import { InspectionItemCard } from "@/components/inspections/inspection-item-card";
 import { TenantValidationForm } from "@/components/inspections/tenant-validation-form";
+import { formatDateTime } from "@/lib/format-date";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,7 +20,7 @@ const VALIDATION_KEY: Record<string, string> = {
 export default async function TenantInspectionDetailPage({
   params,
 }: PageProps<"/[locale]/tenant/leases/[leaseId]/inspections/[inspectionId]">) {
-  const { leaseId, inspectionId } = await params;
+  const { locale, leaseId, inspectionId } = await params;
   const lease = await getMyLease(leaseId);
   const inspection = await getInspection(inspectionId);
   if (!lease || !inspection) notFound();
@@ -55,11 +56,22 @@ export default async function TenantInspectionDetailPage({
             {t(VALIDATION_KEY[inspection.effective_validation_status ?? ""] ?? "validationEnAttente")}
           </Badge>
         </CardHeader>
-        {inspection.tenant_comments && (
-          <CardContent className="text-sm text-muted-foreground">
-            {t("tenantComments")}: {inspection.tenant_comments}
-          </CardContent>
-        )}
+        <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
+          {inspection.document_status === "finalise" && (
+            <p>{t("finalizedOn", { date: formatDateTime(inspection.finalized_at, locale) })}</p>
+          )}
+          {inspection.tenant_validation_status === "valide" && (
+            <p>{t("validatedOn", { date: formatDateTime(inspection.tenant_validation_at, locale) })}</p>
+          )}
+          {inspection.tenant_validation_status === "conteste" && (
+            <p>{t("contestedOn", { date: formatDateTime(inspection.tenant_validation_at, locale) })}</p>
+          )}
+          {inspection.tenant_comments && (
+            <p>
+              {t("tenantComments")}: {inspection.tenant_comments}
+            </p>
+          )}
+        </CardContent>
       </Card>
 
       <div className="flex flex-col gap-3">

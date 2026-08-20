@@ -1,14 +1,20 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ImagePlusIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage, hashBlob, buildInspectionPhotoPath } from "@/lib/photo-upload";
 import { confirmInspectionPhotoUploadAction, deleteInspectionPhotoAction } from "@/actions/inspections";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/format-date";
 
-export type ItemPhoto = { id: string; storage_path: string; url: string | null };
+export type ItemPhoto = {
+  id: string;
+  storage_path: string;
+  url: string | null;
+  uploaded_at: string;
+};
 
 type Stage = "idle" | "busy" | "error-upload" | "error-confirm";
 
@@ -38,6 +44,7 @@ export function PhotoUploadField({
   canUpload: boolean;
 }) {
   const t = useTranslations("inspections");
+  const locale = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingRef = useRef<{ path: string; hash: string } | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
@@ -133,6 +140,9 @@ export function PhotoUploadField({
                   alt=""
                   className="h-24 w-24 rounded-md object-cover"
                 />
+                <span className="text-xs text-muted-foreground">
+                  {t("photoUploadedOn", { date: formatDateTime(photo.uploaded_at, locale) })}
+                </span>
                 {canUpload && (
                   <Button
                     type="button"

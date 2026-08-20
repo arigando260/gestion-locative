@@ -7,6 +7,7 @@ import {
   getMaintenanceTicketPhotos,
   getSignedMaintenanceTicketPhotoUrls,
 } from "@/data/maintenance";
+import { formatDateTime } from "@/lib/format-date";
 import { TenantTicketEditForm } from "@/components/maintenance/tenant-ticket-edit-form";
 import { TicketPhotoGallery } from "@/components/maintenance/ticket-photo-gallery";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,11 @@ export default async function TenantMaintenanceTicketPage({
           <p className="text-muted-foreground">
             {t("createdAt")}: {ticket.created_at.slice(0, 10)}
           </p>
+          {ticket.resolved_at && (
+            <p className="text-muted-foreground">
+              {t("resolvedAt", { date: formatDateTime(ticket.resolved_at, locale) })}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -97,6 +103,7 @@ export default async function TenantMaintenanceTicketPage({
           id: photo.id,
           storage_path: photo.storage_path,
           url: signedUrls[photo.storage_path] ?? null,
+          uploaded_at: photo.uploaded_at,
         }))}
         canUpload
         canDelete

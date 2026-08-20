@@ -1,12 +1,13 @@
 "use client";
 
 import { useActionState, useRef, useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { getOrGenerateLeaseContractUrlAction, approveLeaseContractAction } from "@/actions/lease-contracts";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
+import { formatDateTime } from "@/lib/format-date";
 
 // Remplace le duo DocumentDownloadButton + ApproveLeaseContractForm
 // (rendus côté à côté, sans lien entre eux) par un seul composant qui
@@ -19,6 +20,7 @@ export function LeaseContractApprovalPanel({
   leaseId,
   depositsComplete,
   initiallyViewed,
+  firstViewedAt,
 }: {
   leaseId: string;
   depositsComplete: boolean;
@@ -27,9 +29,13 @@ export function LeaseContractApprovalPanel({
   // session précédente (l'état local viewed serait sinon toujours
   // remis à false au rendu initial).
   initiallyViewed: boolean;
+  // Même colonne, valeur brute cette fois (affichage), en plus du booléen
+  // ci-dessus qui reste la seule source pour la logique de blocage.
+  firstViewedAt: string | null;
 }) {
   const t = useTranslations("leases");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [state, formAction] = useActionState(approveLeaseContractAction, null);
   const [viewed, setViewed] = useState(initiallyViewed);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -46,6 +52,11 @@ export function LeaseContractApprovalPanel({
 
   return (
     <div className="flex flex-col gap-3">
+      {firstViewedAt && (
+        <p className="text-sm text-muted-foreground">
+          {t("contractViewedOn", { date: formatDateTime(firstViewedAt, locale) })}
+        </p>
+      )}
       <DocumentDownloadButton
         action={getOrGenerateLeaseContractUrlAction.bind(null, leaseId)}
         label={t("viewContract")}

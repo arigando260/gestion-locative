@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getInspection, getInspectionItemsWithPhotos } from "@/data/inspections";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { formatDateTime } from "@/lib/format-date";
 import { InspectionItemForm } from "@/components/inspections/inspection-item-form";
 import { InspectionItemCard } from "@/components/inspections/inspection-item-card";
 import { FinalizeInspectionForm } from "@/components/inspections/finalize-inspection-form";
@@ -20,7 +21,7 @@ const DOCUMENT_STATUS_KEY: Record<string, string> = {
 export default async function InspectionDetailPage({
   params,
 }: PageProps<"/[locale]/leases/[leaseId]/inspections/[inspectionId]">) {
-  const { leaseId, inspectionId } = await params;
+  const { locale, leaseId, inspectionId } = await params;
   const [lease, inspection, permissions] = await Promise.all([
     getLease(leaseId),
     getInspection(inspectionId),
@@ -53,6 +54,11 @@ export default async function InspectionDetailPage({
             {t(DOCUMENT_STATUS_KEY[inspection.document_status ?? ""] ?? "documentStatusBrouillon")}
           </Badge>
         </CardHeader>
+        {inspection.document_status === "finalise" && (
+          <CardContent className="text-sm text-muted-foreground">
+            {t("finalizedOn", { date: formatDateTime(inspection.finalized_at, locale) })}
+          </CardContent>
+        )}
       </Card>
 
       {canManage && isDraft ? (

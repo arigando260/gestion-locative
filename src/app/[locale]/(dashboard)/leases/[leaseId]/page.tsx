@@ -23,6 +23,7 @@ import {
   leaseEndApproachingThresholdDate,
 } from "@/data/lease-closure";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { formatDateTime } from "@/lib/format-date";
 import { ScheduleTable } from "@/components/leases/schedule-table";
 import { GenerateSchedulesForm } from "@/components/leases/generate-schedules-form";
 import { PaymentForm } from "@/components/leases/payment-form";
@@ -59,7 +60,7 @@ const STATUS_VARIANT: Record<string, "secondary" | "default" | "destructive" | "
 export default async function LeasePage({
   params,
 }: PageProps<"/[locale]/leases/[leaseId]">) {
-  const { leaseId } = await params;
+  const { locale, leaseId } = await params;
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
@@ -204,11 +205,21 @@ export default async function LeasePage({
       )}
 
       {lease.status !== "brouillon" && leaseContract && (
-        <DocumentDownloadButton
-          action={getOrGenerateLeaseContractUrlAction.bind(null, lease.id)}
-          label={t("viewContract")}
-          pendingLabel={t("generatingContract")}
-        />
+        <div className="flex flex-col items-start gap-1">
+          <DocumentDownloadButton
+            action={getOrGenerateLeaseContractUrlAction.bind(null, lease.id)}
+            label={t("viewContract")}
+            pendingLabel={t("generatingContract")}
+          />
+          <p className="text-sm text-muted-foreground">
+            {t("contractGeneratedOn", { date: formatDateTime(leaseContract.generated_at, locale) })}
+          </p>
+          {leaseContract.approved_at && (
+            <p className="text-sm text-muted-foreground">
+              {t("contractApprovedOn", { date: formatDateTime(leaseContract.approved_at, locale) })}
+            </p>
+          )}
+        </div>
       )}
 
       {showLifecycleBanner && (

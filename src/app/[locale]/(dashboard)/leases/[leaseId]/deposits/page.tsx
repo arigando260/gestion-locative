@@ -57,6 +57,7 @@ export default async function LeaseDepositsPage({
         <AdvanceAuthorizationToggle
           leaseId={lease.id}
           authorized={lease.advance_consumption_authorized}
+          authorizedAt={lease.advance_consumption_authorized_at}
         />
       )}
 
