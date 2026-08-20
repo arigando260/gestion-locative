@@ -78,7 +78,7 @@ export default async function MaintenanceTicketPage({
           )}
           {ticket.description && <p>{ticket.description}</p>}
           <p className="text-muted-foreground">
-            {t("createdAt")}: {ticket.created_at.slice(0, 10)}
+            {t("createdAt")}: {formatDateTime(ticket.created_at, locale)}
           </p>
           {ticket.resolved_at && (
             <p className="text-muted-foreground">

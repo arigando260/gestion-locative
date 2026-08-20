@@ -7,6 +7,7 @@ import {
 } from "@/data/lease-terminations";
 import { getCurrentProfile } from "@/data/session";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { formatDateTime } from "@/lib/format-date";
 import { RespondForm } from "@/components/lease-terminations/respond-form";
 import { CancelButton } from "@/components/lease-terminations/cancel-button";
 import { DepositRefundNotice } from "@/components/lease-terminations/deposit-refund-notice";
@@ -30,7 +31,7 @@ const STATUS_VARIANT: Record<LeaseTerminationStatus, "secondary" | "default" | "
 export default async function LeaseTerminationPage({
   params,
 }: PageProps<"/[locale]/lease-terminations/[requestId]">) {
-  const { requestId } = await params;
+  const { locale, requestId } = await params;
   const [request, profile, permissions] = await Promise.all([
     getLeaseTerminationRequest(requestId),
     getCurrentProfile(),
@@ -73,7 +74,7 @@ export default async function LeaseTerminationPage({
           </p>
           <p>{t("reason")}: {request.reason}</p>
           <p className="text-muted-foreground">
-            {t("createdAt")}: {request.created_at.slice(0, 10)}
+            {t("createdAt")}: {formatDateTime(request.created_at, locale)}
           </p>
 
           {isPending && (
@@ -88,7 +89,7 @@ export default async function LeaseTerminationPage({
                 {t("respondedBy")}: {t(request.responded_by_tenant_id ? "initiatorTenant" : "initiatorStaff")}
               </p>
               <p className="text-muted-foreground">
-                {t("respondedAt")}: {request.responded_at.slice(0, 10)}
+                {t("respondedAt")}: {formatDateTime(request.responded_at, locale)}
               </p>
               {request.response_note && <p>{request.response_note}</p>}
             </>
@@ -96,7 +97,7 @@ export default async function LeaseTerminationPage({
 
           {request.status === "annulee" && request.cancelled_at && (
             <p className="text-muted-foreground">
-              {t("cancelledAt")}: {request.cancelled_at.slice(0, 10)}
+              {t("cancelledAt")}: {formatDateTime(request.cancelled_at, locale)}
             </p>
           )}
         </CardContent>

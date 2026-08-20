@@ -6,6 +6,7 @@ import {
   getMyLeaseTerminationRequest,
   isLeaseTerminationInitiator,
 } from "@/data/lease-terminations";
+import { formatDateTime } from "@/lib/format-date";
 import { RespondForm } from "@/components/lease-terminations/respond-form";
 import { CancelButton } from "@/components/lease-terminations/cancel-button";
 import { DepositRefundNotice } from "@/components/lease-terminations/deposit-refund-notice";
@@ -88,7 +89,7 @@ export default async function TenantLeaseTerminationPage({
           </p>
           <p>{t("reason")}: {request.reason}</p>
           <p className="text-muted-foreground">
-            {t("createdAt")}: {request.created_at.slice(0, 10)}
+            {t("createdAt")}: {formatDateTime(request.created_at, locale)}
           </p>
 
           {isPending && (
@@ -103,7 +104,7 @@ export default async function TenantLeaseTerminationPage({
                 {t("respondedBy")}: {t(request.responded_by_tenant_id ? "initiatorTenant" : "initiatorStaff")}
               </p>
               <p className="text-muted-foreground">
-                {t("respondedAt")}: {request.responded_at.slice(0, 10)}
+                {t("respondedAt")}: {formatDateTime(request.responded_at, locale)}
               </p>
               {request.response_note && <p>{request.response_note}</p>}
             </>
@@ -111,7 +112,7 @@ export default async function TenantLeaseTerminationPage({
 
           {request.status === "annulee" && request.cancelled_at && (
             <p className="text-muted-foreground">
-              {t("cancelledAt")}: {request.cancelled_at.slice(0, 10)}
+              {t("cancelledAt")}: {formatDateTime(request.cancelled_at, locale)}
             </p>
           )}
         </CardContent>

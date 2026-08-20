@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDateTime } from "@/lib/format-date";
 import type { DepositLedgerEntry } from "@/data/deposits";
 
 const TYPE_KEY: Record<string, string> = {
@@ -32,13 +33,14 @@ export async function DepositLedgerTable({
   entries: DepositLedgerEntry[];
 }) {
   const t = await getTranslations("deposits");
+  const locale = await getLocale();
 
   if (entries.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
   const row = (entry: DepositLedgerEntry) => ({
-    date: entry.created_at?.slice(0, 10) ?? "",
+    date: formatDateTime(entry.created_at, locale),
     type: t(TYPE_KEY[entry.deposit_type] ?? "typeAvanceGarantie"),
     entryType: t(ENTRY_KEY[entry.entry_type] ?? "entryDepotInitial"),
     category: entry.imputation_category

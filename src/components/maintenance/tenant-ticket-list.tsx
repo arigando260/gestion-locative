@@ -1,5 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { formatDateTime } from "@/lib/format-date";
 import {
   Table,
   TableBody,
@@ -48,6 +49,7 @@ export async function TenantTicketList({
   tickets: MaintenanceTicketWithOrgAndProperty[];
 }) {
   const t = await getTranslations("maintenance");
+  const locale = await getLocale();
 
   if (tickets.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("tenantEmpty")}</p>;
@@ -59,7 +61,7 @@ export async function TenantTicketList({
     statusLabel: t(STATUS_KEY[ticket.status]),
     statusVariant: STATUS_VARIANT[ticket.status],
     priorityLabel: t(PRIORITY_KEY[ticket.priority]),
-    createdAt: ticket.created_at.slice(0, 10),
+    createdAt: formatDateTime(ticket.created_at, locale),
   });
 
   return (

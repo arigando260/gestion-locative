@@ -1,5 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { formatDateTime } from "@/lib/format-date";
 import {
   Table,
   TableBody,
@@ -39,6 +40,7 @@ export async function TenantLeaseTerminationList({
   requests: LeaseTerminationRequestWithOrgContext[];
 }) {
   const t = await getTranslations("leaseTerminations");
+  const locale = await getLocale();
 
   if (requests.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("tenantEmpty")}</p>;
@@ -50,7 +52,7 @@ export async function TenantLeaseTerminationList({
     initiator: t(request.initiated_by_tenant_id ? "initiatorTenant" : "initiatorStaff"),
     statusLabel: t(STATUS_KEY[request.status]),
     statusVariant: STATUS_VARIANT[request.status],
-    createdAt: request.created_at.slice(0, 10),
+    createdAt: formatDateTime(request.created_at, locale),
   });
 
   return (

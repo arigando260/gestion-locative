@@ -84,7 +84,7 @@ export default async function TenantMaintenanceTicketPage({
             <p className="text-muted-foreground">{ticket.organizations.name}</p>
           )}
           <p className="text-muted-foreground">
-            {t("createdAt")}: {ticket.created_at.slice(0, 10)}
+            {t("createdAt")}: {formatDateTime(ticket.created_at, locale)}
           </p>
           {ticket.resolved_at && (
             <p className="text-muted-foreground">

@@ -1,5 +1,6 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { formatDateTime } from "@/lib/format-date";
 import {
   Table,
   TableBody,
@@ -50,6 +51,7 @@ export async function TicketList({
   tickets: MaintenanceTicketWithProperty[];
 }) {
   const t = await getTranslations("maintenance");
+  const locale = await getLocale();
 
   if (tickets.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
@@ -61,7 +63,7 @@ export async function TicketList({
     statusVariant: STATUS_VARIANT[ticket.status],
     priorityLabel: t(PRIORITY_KEY[ticket.priority]),
     priorityVariant: PRIORITY_VARIANT[ticket.priority],
-    createdAt: ticket.created_at.slice(0, 10),
+    createdAt: formatDateTime(ticket.created_at, locale),
   });
 
   return (
