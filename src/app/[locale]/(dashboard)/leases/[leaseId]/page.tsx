@@ -218,9 +218,9 @@ export default async function LeasePage({
           closureEngaged={closureStatus ? isLeaseClosureEngaged(closureStatus) : false}
           entryInspectionDone={closureStatus?.entry_inspection_done ?? false}
           endDateApproaching={
-            closureStatus?.lease_end_date !== null &&
-            closureStatus?.lease_end_date !== undefined &&
-            closureStatus.lease_end_date <= leaseEndApproachingThresholdDate()
+            closureStatus !== null &&
+            (closureStatus.lease_end_date === null ||
+              closureStatus.lease_end_date <= leaseEndApproachingThresholdDate())
           }
           endDate={closureStatus?.lease_end_date ?? null}
           keysReturnedAt={closureStatus?.keys_returned_at ?? null}

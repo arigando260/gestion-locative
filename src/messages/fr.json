@@ -96,7 +96,7 @@
     "depositsIncompleteTenantHint": "L'approbation sera possible une fois les dépôts initiaux intégralement versés.",
     "endDateUpdated": "Date de fin mise à jour.",
     "leaseEndingBanner": "Ce bail se termine le {date}.",
-    "leaseEndingBannerNoDate": "Ce bail approche de sa fin.",
+    "leaseEndingBannerNoDate": "Ce bail est à durée indéterminée — vous pouvez renouveler (fixer une date de fin) ou enclencher sa clôture à tout moment.",
     "renewLease": "Renouveler",
     "startClosure": "Enclencher la clôture",
     "entryInspectionDueBanner": "Réaliser l'état des lieux d'entrée",

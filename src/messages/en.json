@@ -96,7 +96,7 @@
     "depositsIncompleteTenantHint": "Approval will be possible once the initial deposits are fully paid.",
     "endDateUpdated": "End date updated.",
     "leaseEndingBanner": "This lease ends on {date}.",
-    "leaseEndingBannerNoDate": "This lease is approaching its end.",
+    "leaseEndingBannerNoDate": "This lease has no fixed end date — you can renew it (set an end date) or start its closure at any time.",
     "renewLease": "Renew",
     "startClosure": "Start closure",
     "entryInspectionDueBanner": "Complete the move-in inspection",
