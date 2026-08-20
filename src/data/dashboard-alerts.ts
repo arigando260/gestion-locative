@@ -5,6 +5,7 @@ import {
   getLeasesPendingClosure,
   getLeasesNeedingEntryInspection,
 } from "./lease-closure";
+import { getLeasesWithPendingDepositRefund } from "./deposits";
 import { can, type PermissionSet } from "./permissions";
 
 // Une seule définition du bloc d'alertes du tableau de bord staff — chaque
@@ -39,6 +40,13 @@ export type DashboardAlert =
       leaseId: string;
       propertyName: string;
       tenantName: string | null;
+    }
+  | {
+      kind: "deposit_refund_pending";
+      leaseId: string;
+      propertyName: string;
+      tenantName: string | null;
+      balances: { depositType: string; balance: number }[];
     };
 
 // Gate chaque catégorie sur la permission de lecture pertinente — même
@@ -101,6 +109,23 @@ export async function getDashboardAlerts(
         leaseId: lease.lease_id,
         propertyName: lease.property_name,
         tenantName: lease.tenant_full_name,
+      });
+    }
+  }
+
+  // Resource dédiée (deposit_ledger), pas leases : un bail terminé sans
+  // solde à rembourser n'a rien à voir ici, mais la lecture des montants
+  // de caution reste gouvernée par sa propre permission, pas celle des
+  // baux.
+  if (can(permissions, "deposit_ledger", "read")) {
+    const pendingRefunds = await getLeasesWithPendingDepositRefund(organizationId);
+    for (const lease of pendingRefunds) {
+      alerts.push({
+        kind: "deposit_refund_pending",
+        leaseId: lease.lease_id,
+        propertyName: lease.property_name,
+        tenantName: lease.tenant_full_name,
+        balances: lease.balances.map((b) => ({ depositType: b.deposit_type, balance: b.balance })),
       });
     }
   }

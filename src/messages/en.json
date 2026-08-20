@@ -112,6 +112,8 @@
     "readyToCloseBanner": "Exit inspection finalized — the lease can be closed.",
     "closeLeaseButton": "Close lease definitively",
     "leaseClosed": "Lease closed definitively.",
+    "depositRefundPendingBanner": "This lease has ended — a deposit balance is still due for refund.",
+    "depositRefundPendingLink": "Process the refund",
     "specialTermsLabel": "Special terms (specific to this lease)",
     "specialTermsHint": "Leave empty to use the organization's default terms.",
     "specialTermsUpdated": "Special terms updated.",
@@ -385,7 +387,8 @@
     "closurePendingTitle": "Closures in progress",
     "closurePendingKeysNeeded": "Key return to record",
     "closurePendingInspectionNeeded": "Exit inspection to complete before {date}",
-    "closurePendingReady": "Ready to close"
+    "closurePendingReady": "Ready to close",
+    "depositRefundPendingTitle": "Deposits to refund"
   },
   "billing": {
     "invoicesTitle": "Invoices",

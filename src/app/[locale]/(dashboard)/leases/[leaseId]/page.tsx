@@ -13,7 +13,7 @@ import {
 } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
-import { getDepositBalancesForLease } from "@/data/deposits";
+import { getDepositBalancesForLease, getLeaseDepositBalancesWithRemainder } from "@/data/deposits";
 import { getLeaseActivationReadiness, getLeaseContractByLeaseId } from "@/data/lease-contracts";
 import { getOrGenerateLeaseContractUrlAction } from "@/actions/lease-contracts";
 import { getInspection } from "@/data/inspections";
@@ -94,6 +94,7 @@ export default async function LeasePage({
     depositBalances,
     closureStatus,
     leaseContract,
+    depositRefundBalances,
   ] = await Promise.all([
     getProperty(lease.property_id),
     getOrganization(lease.organization_id),
@@ -105,6 +106,10 @@ export default async function LeasePage({
     lease.status === "brouillon" ? getDepositBalancesForLease(leaseId) : Promise.resolve([]),
     lease.status === "actif" || lease.status === "resilie" ? getLeaseClosureStatus(leaseId) : Promise.resolve(null),
     lease.status !== "brouillon" ? getLeaseContractByLeaseId(leaseId) : Promise.resolve(null),
+    // leases_closure_status (closureStatus ci-dessus) filtre déjà status
+    // in ('actif','resilie') côté vue : un bail 'termine' n'y apparaît
+    // jamais, lecture séparée pour ce cas précis.
+    lease.status === "termine" ? getLeaseDepositBalancesWithRemainder(leaseId) : Promise.resolve([]),
   ]);
 
   // Séquentiel, dépend du résultat ci-dessus (id de l'état des lieux) —
@@ -119,6 +124,17 @@ export default async function LeasePage({
   const ti = await getTranslations("inspections");
   const td = await getTranslations("deposits");
   const tb = await getTranslations("billing");
+
+  // Le nouveau cas "solde de caution à rembourser" affiche des montants de
+  // caution : gate sur leases:update ET deposit_ledger:read. Les cas
+  // préexistants (actif/résilié) restent gatés sur leases:update seul,
+  // inchangé — aucun rapport avec des montants de caution, pas de
+  // nouvelle permission à leur imposer.
+  const canSeeDepositRefund = can(permissions, "deposit_ledger", "read");
+  const visibleDepositRefundBalances = canSeeDepositRefund ? depositRefundBalances : [];
+  const showLifecycleBanner =
+    (closureStatus !== null || visibleDepositRefundBalances.length > 0) &&
+    can(permissions, "leases", "update");
 
   return (
     <div className="flex flex-col gap-6">
@@ -195,21 +211,23 @@ export default async function LeasePage({
         />
       )}
 
-      {closureStatus && can(permissions, "leases", "update") && (
+      {showLifecycleBanner && (
         <LeaseLifecycleBanner
           leaseId={lease.id}
-          closureReferenceDate={closureStatus.closure_reference_date}
-          closureEngaged={isLeaseClosureEngaged(closureStatus)}
-          entryInspectionDone={closureStatus.entry_inspection_done}
+          closureReferenceDate={closureStatus?.closure_reference_date ?? null}
+          closureEngaged={closureStatus ? isLeaseClosureEngaged(closureStatus) : false}
+          entryInspectionDone={closureStatus?.entry_inspection_done ?? false}
           endDateApproaching={
-            closureStatus.lease_end_date !== null &&
+            closureStatus?.lease_end_date !== null &&
+            closureStatus?.lease_end_date !== undefined &&
             closureStatus.lease_end_date <= leaseEndApproachingThresholdDate()
           }
-          endDate={closureStatus.lease_end_date}
-          keysReturnedAt={closureStatus.keys_returned_at}
-          exitInspectionDueDate={closureStatus.exit_inspection_due_date}
-          exitInspectionDone={closureStatus.exit_inspection_done}
+          endDate={closureStatus?.lease_end_date ?? null}
+          keysReturnedAt={closureStatus?.keys_returned_at ?? null}
+          exitInspectionDueDate={closureStatus?.exit_inspection_due_date ?? null}
+          exitInspectionDone={closureStatus?.exit_inspection_done ?? false}
           exitInspectionValidationStatus={exitInspectionValidationStatus}
+          depositRefundBalances={visibleDepositRefundBalances}
         />
       )}
 

@@ -112,6 +112,8 @@
     "readyToCloseBanner": "État des lieux de sortie finalisé — le bail peut être clôturé.",
     "closeLeaseButton": "Clôturer définitivement le bail",
     "leaseClosed": "Bail clôturé définitivement.",
+    "depositRefundPendingBanner": "Ce bail est terminé — un solde de caution reste à rembourser.",
+    "depositRefundPendingLink": "Traiter le remboursement",
     "specialTermsLabel": "Clauses particulières (spécifiques à ce bail)",
     "specialTermsHint": "Laissez vide pour utiliser le règlement par défaut de l'organisation.",
     "specialTermsUpdated": "Clauses particulières mises à jour.",
@@ -385,7 +387,8 @@
     "closurePendingTitle": "Clôtures en cours",
     "closurePendingKeysNeeded": "Restitution des clés à enregistrer",
     "closurePendingInspectionNeeded": "État des lieux de sortie à réaliser avant le {date}",
-    "closurePendingReady": "Prêt à clôturer"
+    "closurePendingReady": "Prêt à clôturer",
+    "depositRefundPendingTitle": "Cautions à rembourser"
   },
   "billing": {
     "invoicesTitle": "Factures",

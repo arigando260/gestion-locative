@@ -52,10 +52,21 @@ export default async function DashboardPage({
     (a): a is Extract<DashboardAlert, { kind: "lease_closure_pending" }> =>
       a.kind === "lease_closure_pending"
   );
+  const depositRefundPending = alerts.filter(
+    (a): a is Extract<DashboardAlert, { kind: "deposit_refund_pending" }> =>
+      a.kind === "deposit_refund_pending"
+  );
 
   const t = await getTranslations("nav");
   const tp = await getTranslations("properties");
   const td = await getTranslations("dashboard");
+  // Mêmes clés que components/leases/deposit-balance-cards.tsx /
+  // lease-lifecycle-banner.tsx — pas de nouveau libellé par type.
+  const tdep = await getTranslations("deposits");
+  const DEPOSIT_TYPE_KEY: Record<string, string> = {
+    avance_garantie: "typeAvanceGarantie",
+    caution_utilities: "typeCautionUtilities",
+  };
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -152,6 +163,32 @@ export default async function DashboardPage({
                     td("closurePendingInspectionNeeded", { date: alert.dueDate ?? "—" })}
                   {alert.subKind === "ready" && td("closurePendingReady")}
                 </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {depositRefundPending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{td("depositRefundPendingTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {depositRefundPending.map((alert) => (
+              <Link
+                key={alert.leaseId}
+                href={`/leases/${alert.leaseId}`}
+                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
+              >
+                <span className="font-medium">
+                  {alert.propertyName} — {alert.tenantName}
+                </span>
+                {alert.balances.map((b) => (
+                  <span key={b.depositType} className="text-muted-foreground">
+                    {tdep(DEPOSIT_TYPE_KEY[b.depositType] ?? "typeAvanceGarantie")}: {b.balance}
+                  </span>
+                ))}
               </Link>
             ))}
           </CardContent>

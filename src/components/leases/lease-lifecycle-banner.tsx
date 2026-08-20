@@ -15,6 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { FormMessage } from "@/components/forms/form-message";
+import type { DepositBalance } from "@/data/deposits";
+
+// Même map que components/leases/deposit-balance-cards.tsx (dupliquée
+// localement : ce fichier est "use client", pas d'import cross-composant
+// pour un simple Record).
+const DEPOSIT_TYPE_KEY: Record<string, string> = {
+  avance_garantie: "typeAvanceGarantie",
+  caution_utilities: "typeCautionUtilities",
+};
 
 // Mêmes clés que la validation locataire des états des lieux (Module 6) —
 // jamais recalculé ici, la vraie source est private.inspection_effective_
@@ -56,6 +65,12 @@ type Props = {
   exitInspectionDueDate: string | null;
   exitInspectionDone: boolean;
   exitInspectionValidationStatus: string | null;
+  // Bail 'termine' avec au moins un solde de caution non remboursé (voir
+  // data/deposits.ts getLeaseDepositBalancesWithRemainder) — tableau vide
+  // sinon (y compris pour tout statut autre que 'termine', jamais peuplé
+  // par la page appelante dans ce cas). Calculé à la volée : disparaît de
+  // lui-même une fois tous les soldes à zéro, aucun statut à gérer.
+  depositRefundBalances: DepositBalance[];
 };
 
 // Un seul bandeau à la fois (Volet B "fin de bail normale" OU Volet C
@@ -80,8 +95,17 @@ export function LeaseLifecycleBanner({
   exitInspectionDueDate,
   exitInspectionDone,
   exitInspectionValidationStatus,
+  depositRefundBalances,
 }: Props) {
   const [closureRevealed, setClosureRevealed] = useState(false);
+
+  // En tête : le seul cas pertinent pour un bail 'termine', statut que le
+  // reste de ce composant ne considère jamais (closureStatus, source des
+  // autres props, est toujours null pour 'termine' — voir data/lease-
+  // closure.ts et la page appelante).
+  if (depositRefundBalances.length > 0) {
+    return <DepositRefundPendingBanner leaseId={leaseId} balances={depositRefundBalances} />;
+  }
 
   if (closureEngaged) {
     if (exitInspectionDone) {
@@ -321,6 +345,45 @@ function ReadyToCloseBanner({
           <SubmitButton pendingText={tc("loading")}>{t("closeLeaseButton")}</SubmitButton>
           <FormMessage state={state} />
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ----------------------------------------------------------------------------
+// Bail 'termine' — solde(s) de caution restant à rembourser.
+// ----------------------------------------------------------------------------
+
+function DepositRefundPendingBanner({
+  leaseId,
+  balances,
+}: {
+  leaseId: string;
+  balances: DepositBalance[];
+}) {
+  const t = useTranslations("leases");
+  const td = useTranslations("deposits");
+
+  return (
+    <Card className="max-w-md border-amber-500/50">
+      <CardHeader>
+        <CardTitle className="text-base">{t("depositRefundPendingBanner")}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+          {balances.map((balance) => (
+            <li key={balance.deposit_type}>
+              {td(DEPOSIT_TYPE_KEY[balance.deposit_type ?? ""] ?? "typeAvanceGarantie")}: {balance.balance}
+            </li>
+          ))}
+        </ul>
+        <Button
+          className="w-fit"
+          render={<Link href={`/leases/${leaseId}/deposits`} />}
+          nativeButton={false}
+        >
+          {t("depositRefundPendingLink")}
+        </Button>
       </CardContent>
     </Card>
   );
