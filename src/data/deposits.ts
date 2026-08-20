@@ -4,6 +4,7 @@ import type { Tables } from "@/lib/supabase/database.types";
 
 export type DepositBalance = Tables<"deposit_ledger_balances">;
 export type DepositLedgerEntry = Tables<"deposit_ledger">;
+export type LeaseAdvanceAuthorizationEvent = Tables<"lease_advance_authorization_events">;
 export type DepositType = "avance_garantie" | "caution_utilities";
 export type ImputationCategory = "loyer" | "degats" | "impayes_utilities";
 
@@ -191,6 +192,25 @@ export async function recordRefund(input: RecordRefundInput) {
 // (trigger Module 5/6d). advance_consumption_authorized_at est forcé par
 // trigger serveur ; _by et (à la révocation) _at doivent être fournis
 // explicitement ici, la contrainte de cohérence (Module 3c) l'exige.
+// Historique append-only, alimenté uniquement par trigger (private.log_
+// lease_advance_authorization_change, Module 3c) — jamais écrit depuis
+// l'application, cette fonction ne fait que le lire. RLS (lease_advance_
+// events_select) filtre déjà interne d'organisation vs locataire de son
+// propre bail, pas de filtre supplémentaire à dupliquer ici.
+export async function getLeaseAdvanceAuthorizationEvents(
+  leaseId: string
+): Promise<LeaseAdvanceAuthorizationEvent[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("lease_advance_authorization_events")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .order("occurred_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
 export async function setAdvanceConsumptionAuthorized(
   leaseId: string,
   authorized: boolean,

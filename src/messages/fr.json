@@ -157,6 +157,7 @@
     "empty": "Aucun paiement pour l'instant.",
     "receipt": "Reçu",
     "downloadReceipt": "Télécharger le reçu",
+    "receiptGeneratedOn": "Généré le {date}",
     "generatingReceipt": "Génération...",
     "receiptNotReady": "Le reçu n'est pas encore disponible."
   },
@@ -210,6 +211,10 @@
     "advanceAuthorized": "Autorisée",
     "advanceNotAuthorized": "Non autorisée",
     "advanceAuthorizedOn": "Autorisée le {date}",
+    "advanceAuthorizationHistoryTitle": "Historique des autorisations",
+    "advanceAuthorizationHistoryEmpty": "Aucun changement d'autorisation pour l'instant.",
+    "advanceEventAuthorized": "Autorisée",
+    "advanceEventRevoked": "Révoquée",
     "authorize": "Autoriser",
     "revoke": "Révoquer",
     "authorizationUpdated": "Autorisation mise à jour.",

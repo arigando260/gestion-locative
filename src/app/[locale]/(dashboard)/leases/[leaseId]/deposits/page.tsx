@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
-import { getDepositBalancesForLease, getDepositLedgerForLease } from "@/data/deposits";
+import {
+  getDepositBalancesForLease,
+  getDepositLedgerForLease,
+  getLeaseAdvanceAuthorizationEvents,
+} from "@/data/deposits";
 import { getSchedulesForLease } from "@/data/schedules";
 import { getInspectionsForLease } from "@/data/inspections";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
@@ -12,6 +16,7 @@ import { InitialDepositForm } from "@/components/leases/initial-deposit-form";
 import { ImputationForm } from "@/components/leases/imputation-form";
 import { RefundForm } from "@/components/leases/refund-form";
 import { AdvanceAuthorizationToggle } from "@/components/leases/advance-authorization-toggle";
+import { AdvanceAuthorizationHistory } from "@/components/leases/advance-authorization-history";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function LeaseDepositsPage({
@@ -21,12 +26,13 @@ export default async function LeaseDepositsPage({
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
-  const [balances, ledger, schedules, permissions, inspections] = await Promise.all([
+  const [balances, ledger, schedules, permissions, inspections, advanceEvents] = await Promise.all([
     getDepositBalancesForLease(leaseId),
     getDepositLedgerForLease(leaseId),
     getSchedulesForLease(leaseId),
     getCurrentUserPermissions(),
     getInspectionsForLease(leaseId),
+    getLeaseAdvanceAuthorizationEvents(leaseId),
   ]);
 
   const t = await getTranslations("deposits");
@@ -59,6 +65,10 @@ export default async function LeaseDepositsPage({
           authorized={lease.advance_consumption_authorized}
           authorizedAt={lease.advance_consumption_authorized_at}
         />
+      )}
+
+      {canWrite && (
+        <AdvanceAuthorizationHistory events={advanceEvents} />
       )}
 
       <div className="flex flex-col gap-3">

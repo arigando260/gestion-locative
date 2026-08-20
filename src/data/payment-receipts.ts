@@ -32,6 +32,24 @@ export async function getPaymentReceiptByPaymentId(
   return data;
 }
 
+// Variante groupée de getPaymentReceiptByPaymentId, pour éviter un N+1 sur
+// un historique de paiements (PaymentHistoryTable) — même table, même RLS
+// (payment_receipts_select), juste .in() au lieu de .eq() sur payment_id.
+export async function getPaymentReceiptsForPayments(
+  paymentIds: string[]
+): Promise<PaymentReceipt[]> {
+  if (paymentIds.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_receipts")
+    .select("*")
+    .in("payment_id", paymentIds);
+
+  if (error) throw error;
+  return data;
+}
+
 // Réservé au staff (RLS payment_receipts_update, Module 9) : seule
 // transition légitime, storage_path null -> renseigné, imposée par le
 // trigger fill_payment_receipt_storage_path — cette fonction ne fait

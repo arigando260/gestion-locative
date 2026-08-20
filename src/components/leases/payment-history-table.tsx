@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentDownloadButton } from "@/components/billing/document-download-button";
-import { formatDate } from "@/lib/format-date";
+import { formatDate, formatDateTime } from "@/lib/format-date";
 import {
   getOrGeneratePaymentReceiptUrlAction,
   getTenantPaymentReceiptUrlAction,
 } from "@/actions/payment-receipts";
 import type { Payment } from "@/data/payments";
+import type { PaymentReceipt } from "@/data/payment-receipts";
 
 const METHOD_KEY: Record<string, string> = {
   mobile_money: "methodMobileMoney",
@@ -31,9 +32,15 @@ const METHOD_KEY: Record<string, string> = {
 // même principe que SubmitButton dans le reste du projet.
 export async function PaymentHistoryTable({
   payments,
+  receipts,
   variant,
 }: {
   payments: Payment[];
+  // Voir data/payment-receipts.ts getPaymentReceiptsForPayments — une ligne
+  // existe dès la confirmation du paiement (trigger ensure_payment_receipt_
+  // pending, Module 9), mais generated_at reste NULL tant que personne n'a
+  // téléchargé le reçu au moins une fois.
+  receipts: PaymentReceipt[];
   variant: "staff" | "tenant";
 }) {
   const t = await getTranslations("payments");
@@ -43,18 +50,28 @@ export async function PaymentHistoryTable({
     return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
+  const receiptByPaymentId = new Map(receipts.map((receipt) => [receipt.payment_id, receipt]));
+
   const receiptButton = (payment: Payment) => {
     if (payment.status !== "confirme") return null;
     const action =
       variant === "staff"
         ? getOrGeneratePaymentReceiptUrlAction.bind(null, payment.id)
         : getTenantPaymentReceiptUrlAction.bind(null, payment.id);
+    const generatedAt = receiptByPaymentId.get(payment.id)?.generated_at ?? null;
     return (
-      <DocumentDownloadButton
-        action={action}
-        label={t("downloadReceipt")}
-        pendingLabel={t("generatingReceipt")}
-      />
+      <div className="flex flex-col items-start gap-1">
+        <DocumentDownloadButton
+          action={action}
+          label={t("downloadReceipt")}
+          pendingLabel={t("generatingReceipt")}
+        />
+        {generatedAt && (
+          <span className="text-xs text-muted-foreground">
+            {t("receiptGeneratedOn", { date: formatDateTime(generatedAt, locale) })}
+          </span>
+        )}
+      </div>
     );
   };
 

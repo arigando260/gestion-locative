@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { getMyLease } from "@/data/leases";
 import { getSchedulesForLease } from "@/data/schedules";
 import { getPaymentsForLease } from "@/data/payments";
+import { getPaymentReceiptsForPayments } from "@/data/payment-receipts";
 import { getDepositBalancesForLease } from "@/data/deposits";
 import { getScheduleInvoicesForLease } from "@/data/schedule-invoices";
 import { getLeaseActivationReadiness, getLeaseContractByLeaseId } from "@/data/lease-contracts";
@@ -49,6 +50,10 @@ export default async function TenantLeaseDetailPage({
     lease.status === "brouillon" ? getLeaseActivationReadiness(leaseId) : Promise.resolve(null),
     lease.status !== "brouillon" ? getLeaseContractByLeaseId(leaseId) : Promise.resolve(null),
   ]);
+
+  // Séquentiel, dépend de la liste des paiements ci-dessus (leurs id) —
+  // même raisonnement que leases/[leaseId]/page.tsx (staff).
+  const paymentReceipts = await getPaymentReceiptsForPayments(payments.map((p) => p.id));
 
   const t = await getTranslations("leases");
   const ts = await getTranslations("schedules");
@@ -108,7 +113,7 @@ export default async function TenantLeaseDetailPage({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{tp("history")}</h2>
-        <PaymentHistoryTable payments={payments} variant="tenant" />
+        <PaymentHistoryTable payments={payments} receipts={paymentReceipts} variant="tenant" />
       </div>
 
       <div className="flex flex-col gap-3">
