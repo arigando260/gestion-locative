@@ -41,8 +41,16 @@ export type InspectionTypeValue = (typeof INSPECTION_TYPES)[number];
 // n'est pas exprimable via PostgREST : la ligne la plus récente par type
 // est prise manuellement ci-dessous, sur un jeu de données nécessairement
 // petit (au plus quelques états des lieux par bail).
+//
+// closureEngaged (voir isLeaseClosureEngaged, data/lease-closure.ts) :
+// "sortie" n'est jamais proposé tant que la clôture n'est pas enclenchée —
+// sinon un état des lieux de sortie pourrait être créé (et finalisé) sans
+// lien avec une fin de bail réelle ou une résiliation en cours. Calculé par
+// l'appelant (déjà en possession de lease.status/keys_returned_at via
+// getLease) plutôt que requêté ici, pour ne pas dupliquer de lecture.
 export async function getAvailableInspectionTypes(
-  leaseId: string
+  leaseId: string,
+  closureEngaged: boolean
 ): Promise<InspectionTypeValue[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -63,6 +71,7 @@ export async function getAvailableInspectionTypes(
   }
 
   return INSPECTION_TYPES.filter((type) => {
+    if (type === "sortie" && !closureEngaged) return false;
     const status = latestStatusByType.get(type);
     return status === undefined || status === "conteste";
   });

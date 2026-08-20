@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getDraftInspectionForLease, getAvailableInspectionTypes } from "@/data/inspections";
+import {
+  isLeaseClosureEngaged,
+  leaseEndApproachingThresholdDate,
+} from "@/data/lease-closure";
 import { InspectionForm } from "@/components/inspections/inspection-form";
 
 export default async function NewInspectionPage({
@@ -23,8 +27,49 @@ export default async function NewInspectionPage({
     redirect({ href: `/leases/${leaseId}/inspections/${draft.id}`, locale });
   }
 
-  const availableTypes = await getAvailableInspectionTypes(leaseId);
+  const closureEngaged = isLeaseClosureEngaged({
+    status: lease.status,
+    keys_returned_at: lease.keys_returned_at,
+  });
   const t = await getTranslations("inspections");
+
+  // Lien direct "?type=sortie" (ExitInspectionDueBanner) atteint alors que
+  // la clôture n'est plus/pas enclenchée — cas défensif (lien obsolète ou
+  // URL modifiée à la main), jamais produit par le parcours normal du
+  // bandeau. availableTypes exclurait de toute façon "sortie" du sélecteur,
+  // mais un message déterminé explique la cause plutôt que de basculer
+  // silencieusement sur "Entrée".
+  if (defaultType === "sortie" && !closureEngaged) {
+    const endDateApproaching =
+      lease.end_date !== null && lease.end_date <= leaseEndApproachingThresholdDate();
+
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-xl font-semibold">{t("createTitle")}</h1>
+        {endDateApproaching ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("exitClosureNotEngagedEndOfLease")}
+            </p>
+            <Link href={`/leases/${leaseId}`} className="text-sm hover:underline">
+              {t("exitClosureNotEngagedEndOfLeaseLink")}
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("exitClosureNotEngagedEarlyDeparture")}
+            </p>
+            <Link href="/lease-terminations/new" className="text-sm hover:underline">
+              {t("exitClosureNotEngagedEarlyDepartureLink")}
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const availableTypes = await getAvailableInspectionTypes(leaseId, closureEngaged);
 
   return (
     <div className="flex flex-col gap-6">

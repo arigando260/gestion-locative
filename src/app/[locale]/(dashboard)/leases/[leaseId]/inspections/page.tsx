@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getLease } from "@/data/leases";
 import { getInspectionsForLease, getAvailableInspectionTypes } from "@/data/inspections";
+import { isLeaseClosureEngaged } from "@/data/lease-closure";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { InspectionList } from "@/components/inspections/inspection-list";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,15 @@ export default async function LeaseInspectionsPage({
   const lease = await getLease(leaseId);
   if (!lease) notFound();
 
+  const closureEngaged = isLeaseClosureEngaged({
+    status: lease.status,
+    keys_returned_at: lease.keys_returned_at,
+  });
+
   const [inspections, permissions, availableTypes] = await Promise.all([
     getInspectionsForLease(leaseId),
     getCurrentUserPermissions(),
-    getAvailableInspectionTypes(leaseId),
+    getAvailableInspectionTypes(leaseId, closureEngaged),
   ]);
 
   const t = await getTranslations("inspections");
