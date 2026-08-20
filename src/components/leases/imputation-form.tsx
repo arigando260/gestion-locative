@@ -13,9 +13,14 @@ import type { ScheduleWithEffectiveStatus } from "@/data/schedules";
 export function ImputationForm({
   leaseId,
   schedules,
+  hasFinalizedEntryInspection,
 }: {
   leaseId: string;
   schedules: ScheduleWithEffectiveStatus[];
+  // Voir app/[locale]/(dashboard)/leases/[leaseId]/deposits/page.tsx —
+  // calculé depuis getInspectionsForLease, pas depuis entry_inspection_done
+  // (Module 10g/10k), scopé actif/resilie et donc peu fiable ici.
+  hasFinalizedEntryInspection: boolean;
 }) {
   const t = useTranslations("deposits");
   const tc = useTranslations("common");
@@ -42,6 +47,9 @@ export function ImputationForm({
           { value: "impayes_utilities", label: t("categoryImpayesUtilities") },
         ]}
       />
+      {category === "degats" && !hasFinalizedEntryInspection && (
+        <p className="text-sm text-amber-600">{t("degatsNoEntryInspectionWarning")}</p>
+      )}
       {category === "loyer" && eligibleSchedules.length > 0 && (
         <SelectField
           name="payment_schedule_id"
