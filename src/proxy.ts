@@ -59,11 +59,15 @@ export async function proxy(request: NextRequest) {
     routing.locales.find((l) => pathname.startsWith(`/${l}`)) ??
     routing.defaultLocale;
 
-  // Toute page authentifiée vit sous (dashboard) ; seule /login (et / qui
-  // redirige lui-même) est publique. Bloquer par défaut plutôt qu'énumérer
-  // chaque route protégée évite d'oublier de garder une nouvelle page.
+  // Toute page authentifiée vit sous (dashboard) ; /login, /signup,
+  // /invite/accept (et / qui redirige lui-même) sont publiques. Bloquer par
+  // défaut plutôt qu'énumérer chaque route protégée évite d'oublier de
+  // garder une nouvelle page.
   const isPublicPath =
-    pathnameWithoutLocale === "/" || pathnameWithoutLocale === "/login";
+    pathnameWithoutLocale === "/" ||
+    pathnameWithoutLocale === "/login" ||
+    pathnameWithoutLocale === "/signup" ||
+    pathnameWithoutLocale === "/invite/accept";
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
@@ -71,7 +75,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathnameWithoutLocale === "/login") {
+  // /invite/accept délibérément exclu : un staff déjà connecté qui clique un
+  // lien d'invitation locataire par erreur doit voir la page (qui gère ce
+  // cas elle-même), pas être redirigé silencieusement vers son dashboard.
+  if (
+    user &&
+    (pathnameWithoutLocale === "/login" || pathnameWithoutLocale === "/signup")
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/dashboard`;
     return NextResponse.redirect(url);
