@@ -1,5 +1,43 @@
 # Architecture applicative
 
+## RÈGLE ABSOLUE — Séparation dev/prod
+
+**`ctfdwccijkdomvgzjlcr` est et reste le projet DEV.** La production est un
+projet Supabase distinct, vierge à sa création, peuplé uniquement par
+l'usage réel une fois lancée. Cette séparation n'est pas négociable au cas
+par cas — elle protège prod contre exactement le type de dérive qui a rendu
+ce projet DEV impropre à devenir prod (mouvements financiers de test dans
+`deposit_ledger`, append-only, non purgeables par design).
+
+- **Seules les migrations (`supabase/migrations/*.sql`) s'appliquent sur
+  l'URL de production.** Aucun script de données de test, de bootstrap
+  manuel, de correctif ad hoc écrit à la main, ou de vérification empirique
+  ne doit jamais cibler le `SUPABASE_DB_URL` de prod.
+- **Prod se peuple uniquement par l'usage réel** : comptes créés via les
+  flux normaux de l'application (invitation, inscription), jamais par un
+  script type `bootstrap-admin.mjs` ou une insertion directe pointée sur
+  prod.
+- Toute vérification empirique en navigateur, tout compte de démonstration,
+  tout script `scripts/*.mjs` : dev uniquement, sans exception.
+- Avant d'exécuter un script ou une commande contre une base, vérifier
+  explicitement quel fichier `.env*` est chargé — voir convention de
+  nommage ci-dessous.
+
+### Convention de nommage des fichiers `.env`
+
+- **`.env.local`** — réservé à DEV, sans exception. C'est le fichier chargé
+  automatiquement par `next dev` / `next build`, et par défaut par tous les
+  scripts existants (`node --env-file=.env.local ...`). Ne doit jamais
+  contenir de credentials prod.
+- **`.env.prod-admin.local`** (créé seulement une fois prod provisionnée) —
+  credentials prod (`SUPABASE_DB_URL`, `SUPABASE_ACCESS_TOKEN`), réservé aux
+  scripts d'application de migration. Nom délibérément en dehors des
+  conventions `.env.production*` de Next.js : Next ne le charge jamais
+  automatiquement, donc aucun risque qu'une commande `next dev` ou
+  `next build` locale l'utilise par erreur. Toute commande qui cible prod
+  doit le référencer explicitement (`node --env-file=.env.prod-admin.local
+  ...`) — jamais implicitement, jamais par défaut.
+
 Ce document fixe les conventions établies pour la tranche verticale bien → bail → échéances → paiement, à suivre pour tous les modules suivants.
 
 ## Structure des dossiers
