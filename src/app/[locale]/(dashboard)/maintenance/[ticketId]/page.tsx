@@ -73,7 +73,7 @@ export default async function MaintenanceTicketPage({
         <CardContent className="flex flex-col gap-2 text-sm">
           {ticket.properties && (
             <p className="text-muted-foreground">
-              {ticket.properties.name} — {ticket.properties.address}
+              {ticket.properties.name} — {ticket.properties.address_complement}
             </p>
           )}
           {ticket.description && <p>{ticket.description}</p>}

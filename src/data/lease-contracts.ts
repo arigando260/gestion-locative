@@ -96,7 +96,7 @@ export async function getLeaseContractRenderData(
   const { data: lease, error } = await supabase
     .from("leases")
     .select(
-      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, special_terms, organizations(name, address, phone, email, special_terms), properties(name, address)"
+      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, special_terms, organizations(name, address, phone, email, special_terms), properties(name, address_complement)"
     )
     .eq("id", leaseId)
     .maybeSingle();
@@ -122,7 +122,7 @@ export async function getLeaseContractRenderData(
       email: string | null;
       special_terms: string | null;
     } | null;
-    properties: { name: string; address: string } | null;
+    properties: { name: string; address_complement: string | null } | null;
   };
 
   const { data: tenant } = await supabase
@@ -136,7 +136,7 @@ export async function getLeaseContractRenderData(
     organization: row.organizations ?? { name: "—", address: null, phone: null, email: null },
     tenantName: tenant?.full_name ?? "—",
     propertyLabel: row.properties?.name ?? "—",
-    propertyAddress: row.properties?.address ?? "—",
+    propertyAddress: row.properties?.address_complement ?? "—",
     rentAmount: row.rent_amount,
     paymentFrequency: row.payment_frequency,
     securityDepositAmount: row.security_deposit_amount,

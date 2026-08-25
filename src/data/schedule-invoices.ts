@@ -75,7 +75,7 @@ export async function getInvoiceGenerationContext(
 
   const { data: lease, error: leaseError } = await supabase
     .from("leases")
-    .select("organization_id, tenant_account_id, organizations(name, address, phone, email), properties(name, address)")
+    .select("organization_id, tenant_account_id, organizations(name, address, phone, email), properties(name, address_complement)")
     .eq("id", leaseId)
     .maybeSingle();
 
@@ -87,7 +87,7 @@ export async function getInvoiceGenerationContext(
     organization_id: string;
     tenant_account_id: string;
     organizations: { name: string; address: string | null; phone: string | null; email: string | null } | null;
-    properties: { name: string; address: string } | null;
+    properties: { name: string; address_complement: string | null } | null;
   };
 
   const { data: tenant } = await supabase

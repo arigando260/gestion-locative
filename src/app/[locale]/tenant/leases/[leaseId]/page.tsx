@@ -78,7 +78,7 @@ export default async function TenantLeaseDetailPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
           <p>{lease.organizations?.name}</p>
-          <p>{lease.properties?.address}</p>
+          <p>{lease.properties?.address_complement}</p>
           <p>
             {t("rentAmount")}: {lease.rent_amount}
           </p>

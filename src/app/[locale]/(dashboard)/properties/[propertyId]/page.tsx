@@ -5,6 +5,7 @@ import { getPropertyWithEffectiveStatus, type PropertyStatus } from "@/data/prop
 import { getPendingOrActiveLeaseForProperty } from "@/data/leases";
 import { getPropertyTypes } from "@/data/property-types";
 import { getPropertyTypeLabel } from "@/lib/property-type-labels";
+import { formatPropertyAddress } from "@/lib/format-property-address";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +59,7 @@ export default async function PropertyPage({
           </Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
-          <p className="text-muted-foreground">{property.address}</p>
+          <p className="text-muted-foreground">{formatPropertyAddress(property)}</p>
           <p>
             {t("locationType")}:{" "}
             {getPropertyTypeLabel(propertyTypes, property.location_type, t)}

@@ -21,18 +21,27 @@ export async function createPropertyAction(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const address = String(formData.get("address") ?? "").trim();
+  const country_code = String(formData.get("country_code") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const neighborhood = String(formData.get("neighborhood") ?? "").trim();
+  const addressComplementRaw = String(formData.get("address_complement") ?? "").trim();
+  const address_complement = addressComplementRaw === "" ? null : addressComplementRaw;
   const price = Number(formData.get("price"));
   const location_type = String(formData.get("location_type") ?? "");
 
-  if (!name || !address || !location_type || Number.isNaN(price)) {
+  // country_code/city/neighborhood obligatoires (décision Module 12c) ;
+  // address_complement reste le seul champ optionnel.
+  if (!name || !country_code || !city || !neighborhood || !location_type || Number.isNaN(price)) {
     return { success: false, message: "Merci de remplir tous les champs." };
   }
 
   const { data, error } = await createProperty({
     organization_id: profile.organization_id,
     name,
-    address,
+    country_code,
+    city,
+    neighborhood,
+    address_complement,
     price,
     location_type,
   });

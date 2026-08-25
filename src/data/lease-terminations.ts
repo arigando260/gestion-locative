@@ -32,7 +32,7 @@ export type LeaseTerminationRequestWithContext = LeaseTerminationRequest & {
     status: string;
     end_date: string | null;
     tenant_account_id: string;
-    properties: { name: string; address: string } | null;
+    properties: { name: string; address_complement: string | null } | null;
   } | null;
 };
 
@@ -43,7 +43,7 @@ export type LeaseTerminationRequestWithOrgContext = LeaseTerminationRequest & {
     id: string;
     status: string;
     end_date: string | null;
-    properties: { name: string; address: string } | null;
+    properties: { name: string; address_complement: string | null } | null;
     organizations: { name: string } | null;
   } | null;
 };
@@ -53,7 +53,7 @@ export type LeaseTerminationFilters = {
 };
 
 const STAFF_SELECT =
-  "*, leases(id, status, end_date, tenant_account_id, properties(name, address))";
+  "*, leases(id, status, end_date, tenant_account_id, properties(name, address_complement))";
 
 // RLS scope déjà la lecture à l'organisation courante (staff interne), même
 // principe que getMaintenanceTickets().
@@ -109,7 +109,7 @@ export async function getMyLeaseTerminationRequests(): Promise<
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lease_termination_requests")
-    .select("*, leases(id, status, end_date, properties(name, address), organizations(name))")
+    .select("*, leases(id, status, end_date, properties(name, address_complement), organizations(name))")
     .order("created_at", { ascending: false })
     .returns<LeaseTerminationRequestWithOrgContext[]>();
 
@@ -131,7 +131,7 @@ export async function getMyLeaseTerminationRequest(
   const { data, error } = await supabase
     .from("lease_termination_requests")
     .select(
-      "*, leases!inner(id, status, end_date, properties(name, address), organizations(name))"
+      "*, leases!inner(id, status, end_date, properties(name, address_complement), organizations(name))"
     )
     .eq("id", id)
     .eq("leases.tenant_account_id", tenantId)

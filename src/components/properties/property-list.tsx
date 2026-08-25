@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PropertyWithEffectiveStatus, PropertyStatus } from "@/data/properties";
 import { getPropertyTypeLabel, type PropertyType } from "@/lib/property-type-labels";
+import { formatPropertyAddress } from "@/lib/format-property-address";
 
 const STATUS_KEY: Record<PropertyStatus, string> = {
   disponible: "statusAvailable",
@@ -60,7 +61,7 @@ export async function PropertyList({
                     {property.name}
                   </Link>
                 </TableCell>
-                <TableCell>{property.address}</TableCell>
+                <TableCell>{formatPropertyAddress(property)}</TableCell>
                 <TableCell>
                   {getPropertyTypeLabel(propertyTypes, property.location_type, t)}
                 </TableCell>
@@ -87,7 +88,7 @@ export async function PropertyList({
                   </Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {property.address}
+                  {formatPropertyAddress(property)}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {getPropertyTypeLabel(propertyTypes, property.location_type, t)}{" "}

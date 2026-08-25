@@ -32,13 +32,13 @@ export type MaintenanceTicketWithProperty = MaintenanceTicket & {
 };
 
 export type MaintenanceTicketWithContext = MaintenanceTicket & {
-  properties: { name: string; address: string } | null;
+  properties: { name: string; address_complement: string | null } | null;
 };
 
 // Vue locataire : "toutes organisations confondues" (Module 1b), même
 // principe que data/leases.ts LeaseWithContext.
 export type MaintenanceTicketWithOrgAndProperty = MaintenanceTicket & {
-  properties: { name: string; address: string } | null;
+  properties: { name: string; address_complement: string | null } | null;
   organizations: { name: string } | null;
 };
 
@@ -93,7 +93,7 @@ export async function getMaintenanceTicket(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, properties(name, address)")
+    .select("*, properties(name, address_complement)")
     .eq("id", id)
     .maybeSingle();
 
@@ -113,7 +113,7 @@ export async function getMyMaintenanceTickets(): Promise<
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, properties(name, address), organizations(name)")
+    .select("*, properties(name, address_complement), organizations(name)")
     .order("created_at", { ascending: false })
     .returns<MaintenanceTicketWithOrgAndProperty[]>();
 
@@ -134,7 +134,7 @@ export async function getMyMaintenanceTicket(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, properties(name, address), organizations(name)")
+    .select("*, properties(name, address_complement), organizations(name)")
     .eq("id", id)
     .eq("reported_by_tenant_id", tenantId)
     .maybeSingle();

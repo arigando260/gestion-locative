@@ -14,7 +14,11 @@ export type PaymentFrequency =
 export type PaymentTiming = "prepaye" | "postpaye";
 
 export type LeaseWithContext = Lease & {
-  properties: { name: string; address: string; location_type: string } | null;
+  properties: {
+    name: string;
+    address_complement: string | null;
+    location_type: string;
+  } | null;
   organizations: { name: string } | null;
 };
 
@@ -25,7 +29,7 @@ export async function getMyLeases(): Promise<LeaseWithContext[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("leases")
-    .select("*, properties(name, address, location_type), organizations(name)")
+    .select("*, properties(name, address_complement, location_type), organizations(name)")
     .order("created_at", { ascending: false })
     .returns<LeaseWithContext[]>();
 
@@ -37,7 +41,7 @@ export async function getMyLease(id: string): Promise<LeaseWithContext | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("leases")
-    .select("*, properties(name, address, location_type), organizations(name)")
+    .select("*, properties(name, address_complement, location_type), organizations(name)")
     .eq("id", id)
     .maybeSingle();
 

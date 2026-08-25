@@ -75,11 +75,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Une Server Action s'invoque par un POST vers l'URL de la page qui l'a
+  // appelée -- acceptTenantInvitationForExistingAccountAction, appelée
+  // depuis /login juste après signInWithPassword(), envoie donc son POST
+  // vers /login alors que l'utilisateur vient tout juste d'être
+  // authentifié. Sans cette exclusion, la redirection ci-dessous
+  // interceptait cette requête et renvoyait un 307 brut au lieu de la
+  // réponse encodée attendue par le protocole des Server Actions --
+  // Next.js ne sait pas l'interpréter côté client ("An unexpected
+  // response was received from the server"). "next-action" est le nom de
+  // header canonique posé par Next.js sur toute invocation de Server
+  // Action (ACTION_HEADER, next/dist/esm/client/components/
+  // app-router-headers.js) -- reproduit et confirmé : une requête POST
+  // authentifiée vers /login portant ce header ne doit jamais être
+  // redirigée, seule une navigation classique (GET, sans ce header) doit
+  // renvoyer vers /dashboard.
+  const isServerActionRequest = request.headers.get("next-action") !== null;
+
   // /invite/accept délibérément exclu : un staff déjà connecté qui clique un
   // lien d'invitation locataire par erreur doit voir la page (qui gère ce
   // cas elle-même), pas être redirigé silencieusement vers son dashboard.
   if (
     user &&
+    !isServerActionRequest &&
     (pathnameWithoutLocale === "/login" || pathnameWithoutLocale === "/signup")
   ) {
     const url = request.nextUrl.clone();

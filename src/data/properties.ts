@@ -1,8 +1,18 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Tables, TablesInsert } from "@/lib/supabase/database.types";
+import type { Tables } from "@/lib/supabase/database.types";
 
-export type Property = Tables<"properties">;
+// address (Module 12c, renommée address_complement) + country_code/city/
+// neighborhood (Module 12c, nouvelles colonnes) : database.types.ts n'a pas
+// encore été régénéré, le type généré porte encore l'ancien nom "address"
+// et ignore les 3 nouvelles colonnes. Omit + extension plutôt qu'une
+// réécriture complète, même patron que data/organizations.ts.
+export type Property = Omit<Tables<"properties">, "address"> & {
+  address_complement: string | null;
+  country_code: string | null;
+  city: string | null;
+  neighborhood: string | null;
+};
 export type PropertyStatus = "disponible" | "occupe" | "en_travaux";
 
 // Lecture : erreur inattendue => on laisse remonter (error.tsx), ce n'est
@@ -72,10 +82,21 @@ export async function getPropertyWithEffectiveStatus(
   return data as PropertyWithEffectiveStatus | null;
 }
 
-export type CreatePropertyInput = Pick<
-  TablesInsert<"properties">,
-  "organization_id" | "name" | "address" | "price" | "location_type"
->;
+// Écrit à la main plutôt que dérivé de TablesInsert<"properties"> (même
+// raison que Property ci-dessus) : country_code/city/neighborhood
+// obligatoires ici (décision Module 12c -- l'écran de création les exige,
+// même si la colonne reste nullable en base pour les 29 biens dev déjà
+// existants) ; address_complement reste le seul champ optionnel.
+export type CreatePropertyInput = {
+  organization_id: string;
+  name: string;
+  country_code: string;
+  city: string;
+  neighborhood: string;
+  address_complement: string | null;
+  price: number;
+  location_type: string;
+};
 
 // Écriture : {data, error} renvoyé tel quel, jamais throw — c'est le Server
 // Action appelant qui décide comment le traduire (lib/errors.ts) et le

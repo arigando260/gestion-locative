@@ -76,7 +76,7 @@ export default async function TenantLeaseTerminationPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
           {request.leases?.properties && (
-            <p className="text-muted-foreground">{request.leases.properties.address}</p>
+            <p className="text-muted-foreground">{request.leases.properties.address_complement}</p>
           )}
           {request.leases?.organizations && (
             <p className="text-muted-foreground">{request.leases.organizations.name}</p>

@@ -37,7 +37,7 @@ export async function TenantLeaseList({
 
   const row = (lease: LeaseWithContext) => ({
     property: lease.properties?.name ?? "—",
-    address: lease.properties?.address ?? "",
+    address: lease.properties?.address_complement ?? "",
     organization: lease.organizations?.name ?? "—",
     statusLabel: tl(STATUS_KEY[lease.status] ?? "statusBrouillon"),
     rent: lease.rent_amount,
