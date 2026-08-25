@@ -9,7 +9,13 @@ import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/forms/select-field";
 import type { Country } from "@/data/countries";
 
-export function SignupForm({ countries }: { countries: Country[] }) {
+export function SignupForm({
+  countries,
+  organizationType,
+}: {
+  countries: Country[];
+  organizationType?: "proprietaire" | "agence";
+}) {
   const t = useTranslations("auth");
   const [organizationName, setOrganizationName] = useState("");
   const [country, setCountry] = useState(countries[0]?.code ?? "");
@@ -54,6 +60,7 @@ export function SignupForm({ countries }: { countries: Country[] }) {
           organization_country: country,
           organization_phone: organizationPhone.trim(),
           full_name: fullName.trim(),
+          organization_type: organizationType ?? null,
         },
       },
     });

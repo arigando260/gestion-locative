@@ -122,6 +122,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
+              <Link
+                href="/forgot-password"
+                className="self-end text-sm text-muted-foreground hover:underline"
+              >
+                {t("forgotPasswordLink")}
+              </Link>
             </div>
             {error ? (
               <p className="text-sm text-destructive" role="alert">
@@ -132,6 +138,12 @@ export default function LoginPage() {
               {loading ? t("submitting") : t("submit")}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            {t("loginNoAccount")}{" "}
+            <Link href="/signup" className="underline">
+              {t("loginNoAccountLink")}
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </main>

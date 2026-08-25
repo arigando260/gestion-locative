@@ -60,14 +60,27 @@ export async function proxy(request: NextRequest) {
     routing.defaultLocale;
 
   // Toute page authentifiée vit sous (dashboard) ; /login, /signup,
-  // /invite/accept (et / qui redirige lui-même) sont publiques. Bloquer par
-  // défaut plutôt qu'énumérer chaque route protégée évite d'oublier de
-  // garder une nouvelle page.
+  // /invite/accept, /forgot-password, /reset-password, /tenant-info (et /
+  // qui affiche désormais elle-même la page d'accueil publique à 3 choix,
+  // Module 12l, plutôt que de rediriger systématiquement) sont publiques.
+  // Bloquer par défaut plutôt qu'énumérer chaque route protégée évite
+  // d'oublier de garder une nouvelle page.
+  //
+  // /reset-password en particulier : le lien de réinitialisation reçu par
+  // email pointe ici avec un ?code= PKCE dans l'URL, échangé côté client par
+  // supabase-js au chargement de la page -- au moment de CETTE requête
+  // (le premier GET), aucun cookie de session n'existe encore, donc `user`
+  // est forcément null ici. Si ce chemin n'était pas public, la redirection
+  // vers /login ci-dessous s'exécuterait avant que la page n'ait la moindre
+  // chance de tourner son échange de code côté client.
   const isPublicPath =
     pathnameWithoutLocale === "/" ||
     pathnameWithoutLocale === "/login" ||
     pathnameWithoutLocale === "/signup" ||
-    pathnameWithoutLocale === "/invite/accept";
+    pathnameWithoutLocale === "/invite/accept" ||
+    pathnameWithoutLocale === "/forgot-password" ||
+    pathnameWithoutLocale === "/reset-password" ||
+    pathnameWithoutLocale === "/tenant-info";
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();

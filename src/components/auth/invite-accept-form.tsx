@@ -278,6 +278,12 @@ function CreateAccountForm({ token, email }: { token: string; email: string }) {
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("submitting") : t("submit")}
       </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        {t("alreadyHaveAccount")}{" "}
+        <Link href={`/login?inviteToken=${encodeURIComponent(token)}`} className="underline">
+          {t("loginLink")}
+        </Link>
+      </p>
     </form>
   );
 }
