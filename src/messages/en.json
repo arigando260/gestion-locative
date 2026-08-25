@@ -34,7 +34,11 @@
     "signupSuccessMessage": "Check your inbox to confirm your email address before signing in.",
     "passwordMismatch": "Passwords do not match.",
     "passwordTooShort": "Password must be at least 6 characters.",
-    "signupGenericError": "Unable to create the account. Check your information and try again."
+    "signupGenericError": "Unable to create the account. Check your information and try again.",
+    "inviteJoinSuccessTitle": "Invitation accepted",
+    "inviteJoinSuccessMessage": "You've joined the new organization.",
+    "inviteJoinErrorTitle": "Signed in, but...",
+    "continueLink": "Continue"
   },
   "invite": {
     "title": "Invitation",
@@ -53,7 +57,14 @@
     "successMessage": "Check your inbox to confirm your email address before signing in.",
     "genericError": "Unable to create the account. Check your information and try again.",
     "passwordMismatch": "Passwords do not match.",
-    "passwordTooShort": "Password must be at least 6 characters."
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "existingAccountTitle": "You already have an account",
+    "existingAccountMessage": "Sign in with {email} to join {organization}.",
+    "loginLink": "Sign in",
+    "joinTitle": "Join {organization}",
+    "joinMessage": "You're already signed in with the right account.",
+    "joinSubmit": "Join",
+    "joinSubmitting": "Joining..."
   },
   "tenants": {
     "title": "Tenants",

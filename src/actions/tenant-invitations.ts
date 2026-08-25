@@ -4,7 +4,11 @@ import { randomBytes, createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/data/session";
-import { insertTenantInvitation } from "@/data/tenant-invitations";
+import {
+  insertTenantInvitation,
+  acceptTenantInvitationExistingAccount,
+} from "@/data/tenant-invitations";
+import { createClient } from "@/lib/supabase/server";
 import { toUserMessage } from "@/lib/errors";
 
 // Durée d'expiration : constante applicative, pas une colonne configurable
@@ -74,4 +78,37 @@ export async function inviteTenantAction(
 
   revalidatePath("/tenants");
   return { success: true, inviteUrl };
+}
+
+export type AcceptExistingAccountResult =
+  | { success: true }
+  | { success: false; message: string };
+
+// Module 12h : rattachement d'un locataire déjà existant à une nouvelle
+// organisation -- appelée soit directement (bouton "Rejoindre", déjà
+// connecté avec le bon compte), soit depuis /login juste après une
+// connexion réussie initiée par ce même parcours. Jamais signUp() ici.
+export async function acceptTenantInvitationForExistingAccountAction(
+  token: string
+): Promise<AcceptExistingAccountResult> {
+  // Vérification légère ici, purement pour un message rapide -- la vraie
+  // autorité reste accept_tenant_invitation_existing_account() côté base
+  // (SECURITY DEFINER), qui revalide tout elle-même indépendamment de ce
+  // qui a pu être vérifié plus haut dans la requête (même discipline que
+  // RLS : l'écran/l'action reflètent, la base fait autorité).
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const { error } = await acceptTenantInvitationExistingAccount(token);
+  if (error) {
+    return { success: false, message: await toUserMessage(error) };
+  }
+
+  revalidatePath("/tenant");
+  return { success: true };
 }

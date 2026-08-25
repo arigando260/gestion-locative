@@ -103,3 +103,16 @@ export async function insertTenantInvitation(input: {
   const supabase = await createClient();
   return supabase.from("tenant_invitations").insert(input).select().single();
 }
+
+// Module 12h : rattachement direct d'un locataire déjà existant (compte
+// créé via une première organisation) à une nouvelle organisation, sans
+// jamais repasser par signUp(). SECURITY DEFINER côté base -- revalide
+// tout elle-même (jeton, verrou, email de l'appelant) ; cette fonction ne
+// fait que relayer l'appel .rpc(), même convention {data,error} que
+// insertTenantInvitation.
+export async function acceptTenantInvitationExistingAccount(token: string) {
+  const supabase = await createClient();
+  return supabase.rpc("accept_tenant_invitation_existing_account", {
+    p_token: token,
+  });
+}

@@ -51,7 +51,11 @@ export default async function InviteAcceptPage({
               <p className="mb-4 text-sm text-muted-foreground">
                 {t("welcomeMessage", { organization: preview.organization_name })}
               </p>
-              <InviteAcceptForm token={token} email={preview.email} />
+              <InviteAcceptForm
+                token={token}
+                email={preview.email}
+                organizationName={preview.organization_name}
+              />
             </>
           )}
         </CardContent>

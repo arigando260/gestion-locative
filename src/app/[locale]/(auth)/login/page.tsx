@@ -2,8 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
+import { acceptTenantInvitationForExistingAccountAction } from "@/actions/tenant-invitations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +19,18 @@ import {
 export default function LoginPage() {
   const t = useTranslations("auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("inviteToken");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Résultat de l'acceptation d'invitation post-connexion (Module 12h) --
+  // null tant qu'on n'a pas atteint cette étape (connexion classique sans
+  // inviteToken, ou pas encore soumis).
+  const [inviteResult, setInviteResult] = useState<
+    { success: true } | { success: false; message: string } | null
+  >(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,8 +49,48 @@ export default function LoginPage() {
       return;
     }
 
+    if (inviteToken) {
+      // Pas de redirection aveugle : on affiche le résultat (succès ou
+      // échec) avant de laisser la personne continuer, plutôt que de
+      // pousser silencieusement vers /tenant sans savoir si le
+      // rattachement a réellement eu lieu.
+      const result = await acceptTenantInvitationForExistingAccountAction(inviteToken);
+      setInviteResult(result);
+      setLoading(false);
+      // Pas de router.replace("/login") ici : une fois connecté,
+      // proxy.ts redirige tout accès (même client-side) à /login vers
+      // /dashboard -- ça écraserait cet écran de résultat avant que la
+      // personne ne le voie. L'URL garde inviteToken jusqu'au clic sur
+      // "Continuer" (navigation réelle vers /tenant, qui purge l'URL
+      // naturellement) -- même jeton déjà accepté à ce stade de toute
+      // façon, sans valeur résiduelle pour un tiers qui l'intercepterait.
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
+  }
+
+  if (inviteResult) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {inviteResult.success ? t("inviteJoinSuccessTitle") : t("inviteJoinErrorTitle")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              {inviteResult.success ? t("inviteJoinSuccessMessage") : inviteResult.message}
+            </p>
+            <Link href="/tenant">
+              <Button className="w-full">{t("continueLink")}</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </main>
+    );
   }
 
   return (

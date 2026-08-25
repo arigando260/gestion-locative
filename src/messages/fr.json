@@ -34,7 +34,11 @@
     "signupSuccessMessage": "Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
-    "signupGenericError": "Impossible de créer le compte. Vérifiez vos informations et réessayez."
+    "signupGenericError": "Impossible de créer le compte. Vérifiez vos informations et réessayez.",
+    "inviteJoinSuccessTitle": "Invitation acceptée",
+    "inviteJoinSuccessMessage": "Vous avez rejoint la nouvelle organisation.",
+    "inviteJoinErrorTitle": "Connexion réussie, mais...",
+    "continueLink": "Continuer"
   },
   "invite": {
     "title": "Invitation",
@@ -53,7 +57,14 @@
     "successMessage": "Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.",
     "genericError": "Impossible de créer le compte. Vérifiez vos informations et réessayez.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
-    "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères."
+    "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
+    "existingAccountTitle": "Vous avez déjà un compte",
+    "existingAccountMessage": "Connectez-vous avec {email} pour rejoindre {organization}.",
+    "loginLink": "Se connecter",
+    "joinTitle": "Rejoindre {organization}",
+    "joinMessage": "Vous êtes déjà connecté(e) avec le bon compte.",
+    "joinSubmit": "Rejoindre",
+    "joinSubmitting": "Rattachement en cours..."
   },
   "tenants": {
     "title": "Locataires",
