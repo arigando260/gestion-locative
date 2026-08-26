@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { getCurrentProfile, getCurrentTenant } from "@/data/session";
+import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 
@@ -26,6 +27,15 @@ export default async function DashboardLayout({
 
   const t = await getTranslations("nav");
   const tc = await getTranslations("common");
+  // Premier lien de nav conditionné dans ce projet -- réutilise
+  // getCurrentUserPermissions()/can() (data/permissions.ts, déjà utilisée
+  // par toutes les autres pages du dashboard, lit la vue my_permissions) :
+  // role_permissions reste la seule source de vérité, jamais un test de
+  // rôle codé en dur ici. La page /team elle-même redirige indépendamment
+  // si atteinte directement sans cette permission (défense en profondeur,
+  // pas seulement un masquage côté nav).
+  const permissions = await getCurrentUserPermissions();
+  const canManageTeam = can(permissions, "users", "create");
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -49,6 +59,11 @@ export default async function DashboardLayout({
             <Link href="/tenants" className="hover:underline">
               {t("tenants")}
             </Link>
+            {canManageTeam ? (
+              <Link href="/team" className="hover:underline">
+                {t("team")}
+              </Link>
+            ) : null}
             <Link href="/lease-terminations" className="hover:underline">
               {t("leaseTerminations")}
             </Link>

@@ -60,11 +60,11 @@ export async function proxy(request: NextRequest) {
     routing.defaultLocale;
 
   // Toute page authentifiée vit sous (dashboard) ; /login, /signup,
-  // /invite/accept, /forgot-password, /reset-password, /tenant-info (et /
-  // qui affiche désormais elle-même la page d'accueil publique à 3 choix,
-  // Module 12l, plutôt que de rediriger systématiquement) sont publiques.
-  // Bloquer par défaut plutôt qu'énumérer chaque route protégée évite
-  // d'oublier de garder une nouvelle page.
+  // /invite/accept, /staff-invite/accept, /forgot-password, /reset-password,
+  // /tenant-info (et / qui affiche désormais elle-même la page d'accueil
+  // publique à 3 choix, Module 12l, plutôt que de rediriger systématiquement)
+  // sont publiques. Bloquer par défaut plutôt qu'énumérer chaque route
+  // protégée évite d'oublier de garder une nouvelle page.
   //
   // /reset-password en particulier : le lien de réinitialisation reçu par
   // email pointe ici avec un ?code= PKCE dans l'URL, échangé côté client par
@@ -78,6 +78,7 @@ export async function proxy(request: NextRequest) {
     pathnameWithoutLocale === "/login" ||
     pathnameWithoutLocale === "/signup" ||
     pathnameWithoutLocale === "/invite/accept" ||
+    pathnameWithoutLocale === "/staff-invite/accept" ||
     pathnameWithoutLocale === "/forgot-password" ||
     pathnameWithoutLocale === "/reset-password" ||
     pathnameWithoutLocale === "/tenant-info";
