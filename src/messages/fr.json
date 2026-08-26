@@ -402,6 +402,7 @@
     "create": "Créer un ticket",
     "createTitle": "Créer un ticket de maintenance",
     "property": "Bien",
+    "organization": "Organisation",
     "lease": "Bail",
     "noLeaseOption": "Aucun bail (bien vacant)",
     "leaseStatusActif": "Actif",

@@ -402,6 +402,7 @@
     "create": "Create a ticket",
     "createTitle": "Create a maintenance ticket",
     "property": "Property",
+    "organization": "Organization",
     "lease": "Lease",
     "noLeaseOption": "No lease (vacant property)",
     "leaseStatusActif": "Active",
