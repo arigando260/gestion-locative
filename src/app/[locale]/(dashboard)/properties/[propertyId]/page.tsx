@@ -6,7 +6,13 @@ import { getPendingOrActiveLeaseForProperty } from "@/data/leases";
 import { getPropertyTypes } from "@/data/property-types";
 import { getPropertyTypeLabel } from "@/lib/property-type-labels";
 import { formatPropertyAddress } from "@/lib/format-property-address";
+import { getCurrentProfile } from "@/data/session";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import {
+  getPropertyAgentAssignments,
+  getAvailableAgentsForAssignment,
+} from "@/data/property-agent-assignments";
+import { PropertyAgentAssignments } from "@/components/properties/property-agent-assignments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,11 +37,12 @@ export default async function PropertyPage({
   params,
 }: PageProps<"/[locale]/properties/[propertyId]">) {
   const { propertyId } = await params;
-  const [property, propertyTypes, permissions, pendingOrActiveLease] = await Promise.all([
+  const [property, propertyTypes, permissions, pendingOrActiveLease, profile] = await Promise.all([
     getPropertyWithEffectiveStatus(propertyId),
     getPropertyTypes(),
     getCurrentUserPermissions(),
     getPendingOrActiveLeaseForProperty(propertyId),
+    getCurrentProfile(),
   ]);
 
   if (!property) notFound();
@@ -45,6 +52,18 @@ export default async function PropertyPage({
     can(permissions, "leases", "create") &&
     LEASE_ELIGIBLE_TYPES.includes(property.location_type) &&
     !pendingOrActiveLease;
+
+  // Section "Agents assignés" : visible seulement pour un admin (seul rôle
+  // détenant property_agent_assignments:create/delete, Module 12o) --
+  // requêtes évitées pour tout autre rôle plutôt que récupérées puis
+  // masquées.
+  const canManageAgentAssignments = can(permissions, "property_agent_assignments", "create");
+  const [agentAssignments, availableAgents] = canManageAgentAssignments && profile
+    ? await Promise.all([
+        getPropertyAgentAssignments(propertyId),
+        getAvailableAgentsForAssignment(profile.organization_id, propertyId),
+      ])
+    : [[], []];
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,6 +109,13 @@ export default async function PropertyPage({
           </Button>
         )}
       </div>
+      {canManageAgentAssignments && (
+        <PropertyAgentAssignments
+          propertyId={property.id}
+          assignments={agentAssignments}
+          availableAgents={availableAgents}
+        />
+      )}
     </div>
   );
 }

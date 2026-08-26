@@ -207,7 +207,17 @@
     "viewPendingLease": "View pending draft",
     "typeLongueDuree": "Long-term",
     "typeMeubleSimple": "Furnished short-term",
-    "typeCourteDuree": "Short-term"
+    "typeCourteDuree": "Short-term",
+    "agentAssignmentsTitle": "Assigned agents",
+    "agentAssignmentsEmpty": "No agent assigned to this property yet.",
+    "agentAssignedOn": "Assigned on {date}",
+    "agentAssignmentRemove": "Remove",
+    "agentAssignmentRemoving": "Removing...",
+    "agentAssignmentRemoveError": "Unable to remove this assignment.",
+    "agentAssignmentSelectLabel": "Agent to assign",
+    "agentAssignmentSubmit": "Assign",
+    "agentAssignmentSubmitting": "Assigning...",
+    "agentAssignmentsNoneAvailable": "All agents in the organization are already assigned to this property."
   },
   "leases": {
     "createTitle": "Create a lease",

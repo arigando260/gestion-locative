@@ -207,7 +207,17 @@
     "viewPendingLease": "Voir le brouillon en cours",
     "typeLongueDuree": "Longue durée",
     "typeMeubleSimple": "Meublé simple",
-    "typeCourteDuree": "Courte durée"
+    "typeCourteDuree": "Courte durée",
+    "agentAssignmentsTitle": "Agents assignés",
+    "agentAssignmentsEmpty": "Aucun agent assigné à ce bien pour l'instant.",
+    "agentAssignedOn": "Assigné le {date}",
+    "agentAssignmentRemove": "Retirer",
+    "agentAssignmentRemoving": "Retrait...",
+    "agentAssignmentRemoveError": "Impossible de retirer cette assignation.",
+    "agentAssignmentSelectLabel": "Agent à assigner",
+    "agentAssignmentSubmit": "Assigner",
+    "agentAssignmentSubmitting": "Assignation...",
+    "agentAssignmentsNoneAvailable": "Tous les agents de l'organisation sont déjà assignés à ce bien."
   },
   "leases": {
     "createTitle": "Créer un bail",
