@@ -101,7 +101,42 @@ export type CreatePropertyInput = {
 // Écriture : {data, error} renvoyé tel quel, jamais throw — c'est le Server
 // Action appelant qui décide comment le traduire (lib/errors.ts) et le
 // renvoyer à useActionState.
+//
+// RPC plutôt qu'un INSERT direct (Module 12q) : un simple
+// `insert(...).select().single()` échoue pour un agent — vérifié
+// empiriquement sur dev — car Postgres filtre la clause RETURNING avec la
+// policy SELECT de la table, et un bien fraîchement créé n'a par
+// construction aucune ligne property_agent_assignments au moment où
+// RETURNING est évalué (agent_property_scope() y échoue donc). La fonction
+// public.create_property() pose l'assignation de l'agent créateur AVANT de
+// faire son propre `returning * into`, dans la même transaction — le
+// contrat {data, error} et CreatePropertyInput restent inchangés, seul le
+// mécanisme d'écriture change.
 export async function createProperty(input: CreatePropertyInput) {
   const supabase = await createClient();
-  return supabase.from("properties").insert(input).select().single();
+  // Cast nécessaire même après régénération de database.types.ts (Module
+  // 12r) : le vrai fichier généré décrit désormais correctement create_property
+  // (Args + Returns + SetofOptions.isOneToOne, vérifié), mais
+  // lib/supabase/server.ts appelle createServerClient(...) SANS lui passer
+  // <Database> en paramètre générique -- le client renvoyé par createClient()
+  // n'est donc typé contre AUCUN schéma, ici comme pour tout appel .from()/
+  // .rpc() ailleurs dans ce projet (server.ts, client.ts et admin.ts sont
+  // tous les trois dans ce cas). Le typage de Property/Tables<"properties">
+  // utilisé partout ailleurs dans ce fichier tient uniquement aux annotations
+  // de retour explicites (Promise<Property[]> etc.), jamais d'une inférence
+  // réelle depuis le client -- ce n'est donc pas un problème spécifique aux
+  // RPC ni à cette fonction, mais une lacune plus large, hors périmètre ici.
+  const result = await supabase
+    .rpc("create_property", {
+      p_organization_id: input.organization_id,
+      p_name: input.name,
+      p_country_code: input.country_code,
+      p_city: input.city,
+      p_neighborhood: input.neighborhood,
+      p_address_complement: input.address_complement,
+      p_price: input.price,
+      p_location_type: input.location_type,
+    })
+    .single();
+  return { data: result.data as Property, error: result.error };
 }

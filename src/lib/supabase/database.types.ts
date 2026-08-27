@@ -10,10 +10,37 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deposit_ledger: {
         Row: {
           amount: number
@@ -24,11 +51,11 @@ export type Database = {
           imputation_category: string | null
           inspection_id: string | null
           lease_id: string | null
+          maintenance_ticket_id: string | null
           organization_id: string
           payment_id: string | null
           payment_schedule_id: string | null
           reason: string | null
-          reservation_id: string | null
         }
         Insert: {
           amount: number
@@ -39,11 +66,11 @@ export type Database = {
           imputation_category?: string | null
           inspection_id?: string | null
           lease_id?: string | null
+          maintenance_ticket_id?: string | null
           organization_id: string
           payment_id?: string | null
           payment_schedule_id?: string | null
           reason?: string | null
-          reservation_id?: string | null
         }
         Update: {
           amount?: number
@@ -54,11 +81,11 @@ export type Database = {
           imputation_category?: string | null
           inspection_id?: string | null
           lease_id?: string | null
+          maintenance_ticket_id?: string | null
           organization_id?: string
           payment_id?: string | null
           payment_schedule_id?: string | null
           reason?: string | null
-          reservation_id?: string | null
         }
         Relationships: [
           {
@@ -83,6 +110,34 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "deposit_ledger_maintenance_ticket_org_fk"
+            columns: ["organization_id", "maintenance_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_tickets"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
             foreignKeyName: "deposit_ledger_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -94,13 +149,6 @@ export type Database = {
             columns: ["organization_id", "payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
-            referencedColumns: ["organization_id", "id"]
-          },
-          {
-            foreignKeyName: "deposit_ledger_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
             referencedColumns: ["organization_id", "id"]
           },
           {
@@ -219,6 +267,59 @@ export type Database = {
           },
         ]
       }
+      invoice_schedule_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          organization_id: string
+          payment_schedule_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          organization_id: string
+          payment_schedule_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          organization_id?: string
+          payment_schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_schedule_items_invoice_org_fk"
+            columns: ["organization_id", "invoice_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_invoices"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "invoice_schedule_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_schedule_items_schedule_org_fk"
+            columns: ["organization_id", "payment_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "payment_schedules"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "invoice_schedule_items_schedule_org_fk"
+            columns: ["organization_id", "payment_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "payment_schedules_effective_status"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
       lease_advance_authorization_events: {
         Row: {
           action: string
@@ -266,6 +367,211 @@ export type Database = {
             referencedRelation: "leases"
             referencedColumns: ["organization_id", "id"]
           },
+          {
+            foreignKeyName: "lease_advance_events_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_advance_events_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_advance_events_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+        ]
+      }
+      lease_contracts: {
+        Row: {
+          approved_at: string | null
+          first_viewed_at: string | null
+          generated_at: string
+          id: string
+          lease_id: string
+          organization_id: string
+          storage_path: string
+        }
+        Insert: {
+          approved_at?: string | null
+          first_viewed_at?: string | null
+          generated_at?: string
+          id?: string
+          lease_id: string
+          organization_id: string
+          storage_path: string
+        }
+        Update: {
+          approved_at?: string | null
+          first_viewed_at?: string | null
+          generated_at?: string
+          id?: string
+          lease_id?: string
+          organization_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_contracts_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "lease_contracts_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_contracts_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_contracts_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lease_termination_requests: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          initiated_by_staff_id: string | null
+          initiated_by_tenant_id: string | null
+          lease_id: string
+          organization_id: string
+          reason: string
+          requested_end_date: string
+          responded_at: string | null
+          responded_by_staff_id: string | null
+          responded_by_tenant_id: string | null
+          response_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          initiated_by_staff_id?: string | null
+          initiated_by_tenant_id?: string | null
+          lease_id: string
+          organization_id: string
+          reason: string
+          requested_end_date: string
+          responded_at?: string | null
+          responded_by_staff_id?: string | null
+          responded_by_tenant_id?: string | null
+          response_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          initiated_by_staff_id?: string | null
+          initiated_by_tenant_id?: string | null
+          lease_id?: string
+          organization_id?: string
+          reason?: string
+          requested_end_date?: string
+          responded_at?: string | null
+          responded_by_staff_id?: string | null
+          responded_by_tenant_id?: string | null
+          response_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_termination_requests_initiated_tenant_fkey"
+            columns: ["initiated_by_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_responded_staff_org_fk"
+            columns: ["organization_id", "responded_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_responded_tenant_fkey"
+            columns: ["responded_by_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lease_termination_requests_staff_org_fk"
+            columns: ["organization_id", "initiated_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["organization_id", "id"]
+          },
         ]
       }
       leases: {
@@ -287,6 +593,7 @@ export type Database = {
           rent_amount: number
           security_deposit_amount: number
           security_deposit_months: number | null
+          special_terms: string | null
           start_date: string
           status: string
           tenant_account_id: string
@@ -312,6 +619,7 @@ export type Database = {
           rent_amount: number
           security_deposit_amount: number
           security_deposit_months?: number | null
+          special_terms?: string | null
           start_date: string
           status?: string
           tenant_account_id: string
@@ -337,6 +645,7 @@ export type Database = {
           rent_amount?: number
           security_deposit_amount?: number
           security_deposit_months?: number | null
+          special_terms?: string | null
           start_date?: string
           status?: string
           tenant_account_id?: string
@@ -374,6 +683,13 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "leases_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_effective_status"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
             foreignKeyName: "leases_tenant_account_id_fkey"
             columns: ["tenant_account_id"]
             isOneToOne: false
@@ -382,47 +698,326 @@ export type Database = {
           },
         ]
       }
+      maintenance_ticket_photos: {
+        Row: {
+          file_hash: string
+          id: string
+          maintenance_ticket_id: string
+          organization_id: string
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          file_hash: string
+          id?: string
+          maintenance_ticket_id: string
+          organization_id: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          file_hash?: string
+          id?: string
+          maintenance_ticket_id?: string
+          organization_id?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_ticket_photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_ticket_photos_ticket_org_fk"
+            columns: ["organization_id", "maintenance_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_tickets"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
+      maintenance_tickets: {
+        Row: {
+          actual_cost: number | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          lease_id: string | null
+          organization_id: string
+          priority: string
+          property_id: string
+          reported_by_staff_id: string | null
+          reported_by_tenant_id: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          lease_id?: string | null
+          organization_id: string
+          priority?: string
+          property_id: string
+          reported_by_staff_id?: string | null
+          reported_by_tenant_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          lease_id?: string | null
+          organization_id?: string
+          priority?: string
+          property_id?: string
+          reported_by_staff_id?: string | null
+          reported_by_tenant_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tickets_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_effective_status"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_reported_by_staff_org_fk"
+            columns: ["organization_id", "reported_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "maintenance_tickets_reported_by_tenant_fkey"
+            columns: ["reported_by_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          organization_id: string
+          plan_id: string
+          status: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id: string
+          plan_id: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id?: string
+          plan_id?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
+          address: string | null
+          country_code: string
           created_at: string
           default_billing_day: number | null
           default_standard_check_in_time: string | null
           default_standard_check_out_time: string | null
           default_turnover_buffer_days: number
+          email: string | null
           id: string
           is_active: boolean
           name: string
+          organization_type: string | null
+          phone: string | null
           slug: string
+          special_terms: string | null
           tenant_capture_enabled: boolean
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          country_code: string
           created_at?: string
           default_billing_day?: number | null
           default_standard_check_in_time?: string | null
           default_standard_check_out_time?: string | null
           default_turnover_buffer_days?: number
+          email?: string | null
           id?: string
           is_active?: boolean
           name: string
+          organization_type?: string | null
+          phone?: string | null
           slug: string
+          special_terms?: string | null
           tenant_capture_enabled?: boolean
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          country_code?: string
           created_at?: string
           default_billing_day?: number | null
           default_standard_check_in_time?: string | null
           default_standard_check_out_time?: string | null
           default_turnover_buffer_days?: number
+          email?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          organization_type?: string | null
+          phone?: string | null
           slug?: string
+          special_terms?: string | null
           tenant_capture_enabled?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      payment_receipts: {
+        Row: {
+          created_at: string
+          generated_at: string | null
+          id: string
+          organization_id: string
+          payment_id: string
+          storage_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          organization_id: string
+          payment_id: string
+          storage_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string | null
+          id?: string
+          organization_id?: string
+          payment_id?: string
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_receipts_payment_org_fk"
+            columns: ["organization_id", "payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
       }
       payment_schedules: {
         Row: {
@@ -435,7 +1030,6 @@ export type Database = {
           organization_id: string
           period_end_date: string
           period_start_date: string
-          reservation_id: string | null
           status: string
           updated_at: string
         }
@@ -449,7 +1043,6 @@ export type Database = {
           organization_id: string
           period_end_date: string
           period_start_date: string
-          reservation_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -463,7 +1056,6 @@ export type Database = {
           organization_id?: string
           period_end_date?: string
           period_start_date?: string
-          reservation_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -476,18 +1068,32 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "payment_schedules_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_schedules_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -504,7 +1110,6 @@ export type Database = {
           payment_date: string
           payment_schedule_id: string | null
           payment_type: string
-          reservation_id: string | null
           status: string
           updated_at: string
         }
@@ -520,7 +1125,6 @@ export type Database = {
           payment_date?: string
           payment_schedule_id?: string | null
           payment_type: string
-          reservation_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -536,7 +1140,6 @@ export type Database = {
           payment_date?: string
           payment_schedule_id?: string | null
           payment_type?: string
-          reservation_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -549,18 +1152,32 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "payments_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payments_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payments_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "payments_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "payments_schedule_org_fk"
@@ -639,12 +1256,15 @@ export type Database = {
       }
       properties: {
         Row: {
-          address: string
+          address_complement: string | null
+          city: string | null
+          country_code: string | null
           created_at: string
           external_owner_id: string | null
           id: string
           location_type: string
           name: string
+          neighborhood: string | null
           organization_id: string
           price: number
           standard_check_in_time: string | null
@@ -654,12 +1274,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          address: string
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
           created_at?: string
           external_owner_id?: string | null
           id?: string
           location_type: string
           name: string
+          neighborhood?: string | null
           organization_id: string
           price: number
           standard_check_in_time?: string | null
@@ -669,12 +1292,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          address?: string
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
           created_at?: string
           external_owner_id?: string | null
           id?: string
           location_type?: string
           name?: string
+          neighborhood?: string | null
           organization_id?: string
           price?: number
           standard_check_in_time?: string | null
@@ -685,11 +1311,81 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "properties_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+          {
             foreignKeyName: "properties_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_agent_assignments: {
+        Row: {
+          agent_id: string
+          assigned_at: string
+          assigned_by: string
+          id: string
+          organization_id: string
+          property_id: string
+        }
+        Insert: {
+          agent_id: string
+          assigned_at?: string
+          assigned_by: string
+          id?: string
+          organization_id: string
+          property_id: string
+        }
+        Update: {
+          agent_id?: string
+          assigned_at?: string
+          assigned_by?: string
+          id?: string
+          organization_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_agent_assignments_agent_org_fk"
+            columns: ["organization_id", "agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "property_agent_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_agent_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_agent_assignments_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "property_agent_assignments_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_effective_status"
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -706,7 +1402,6 @@ export type Database = {
           lease_id: string | null
           observations: string | null
           organization_id: string
-          reservation_id: string | null
           tenant_comments: string | null
           tenant_validation_at: string | null
           tenant_validation_status: string
@@ -724,7 +1419,6 @@ export type Database = {
           lease_id?: string | null
           observations?: string | null
           organization_id: string
-          reservation_id?: string | null
           tenant_comments?: string | null
           tenant_validation_at?: string | null
           tenant_validation_status?: string
@@ -742,7 +1436,6 @@ export type Database = {
           lease_id?: string | null
           observations?: string | null
           organization_id?: string
-          reservation_id?: string | null
           tenant_comments?: string | null
           tenant_validation_at?: string | null
           tenant_validation_status?: string
@@ -764,18 +1457,32 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "property_inspections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "property_inspections_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -810,73 +1517,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservations: {
-        Row: {
-          check_in_date: string
-          check_out_date: string
-          created_at: string
-          id: string
-          nightly_rate: number
-          organization_id: string
-          property_id: string
-          status: string
-          tenant_account_id: string
-          total_amount: number
-          turnover_buffer_days: number
-          updated_at: string
-        }
-        Insert: {
-          check_in_date: string
-          check_out_date: string
-          created_at?: string
-          id?: string
-          nightly_rate: number
-          organization_id: string
-          property_id: string
-          status?: string
-          tenant_account_id: string
-          total_amount: number
-          turnover_buffer_days: number
-          updated_at?: string
-        }
-        Update: {
-          check_in_date?: string
-          check_out_date?: string
-          created_at?: string
-          id?: string
-          nightly_rate?: number
-          organization_id?: string
-          property_id?: string
-          status?: string
-          tenant_account_id?: string
-          total_amount?: number
-          turnover_buffer_days?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reservations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_property_org_fk"
-            columns: ["organization_id", "property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["organization_id", "id"]
-          },
-          {
-            foreignKeyName: "reservations_tenant_account_id_fkey"
-            columns: ["tenant_account_id"]
-            isOneToOne: false
-            referencedRelation: "tenant_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -958,6 +1598,179 @@ export type Database = {
           },
         ]
       }
+      schedule_invoices: {
+        Row: {
+          generated_at: string
+          generated_by: string
+          id: string
+          lease_id: string | null
+          organization_id: string
+          storage_path: string
+        }
+        Insert: {
+          generated_at?: string
+          generated_by: string
+          id?: string
+          lease_id?: string | null
+          organization_id: string
+          storage_path: string
+        }
+        Update: {
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          lease_id?: string | null
+          organization_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_invoices_generated_by_org_fk"
+            columns: ["organization_id", "generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "schedule_invoices_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "schedule_invoices_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "schedule_invoices_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "schedule_invoices_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "schedule_invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role_code: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          role_code: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role_code?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_properties: number | null
+          monthly_price: number
+          name: string
+          sort_order: number
+          trial_days: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_properties?: number | null
+          monthly_price: number
+          name: string
+          sort_order?: number
+          trial_days?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_properties?: number | null
+          monthly_price?: number
+          name?: string
+          sort_order?: number
+          trial_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenant_accounts: {
         Row: {
           created_at: string
@@ -987,6 +1800,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tenant_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_organization_memberships: {
         Row: {
@@ -1072,7 +1946,6 @@ export type Database = {
           deposit_type: string | null
           lease_id: string | null
           organization_id: string | null
-          reservation_id: string | null
           total_imputed: number | null
           total_refunded: number | null
         }
@@ -1085,18 +1958,105 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "deposit_ledger_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "deposit_ledger_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      leases_activation_readiness: {
+        Row: {
+          contract_approved_at: string | null
+          contract_first_viewed_at: string | null
+          contract_generated_at: string | null
+          contract_id: string | null
+          contract_storage_path: string | null
+          deposits_complete: boolean | null
+          lease_id: string | null
+          organization_id: string | null
+          status: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "deposit_ledger_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
+            foreignKeyName: "leases_organization_id_fkey"
+            columns: ["organization_id"]
             isOneToOne: false
-            referencedRelation: "reservations"
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leases_closure_status: {
+        Row: {
+          closure_reference_date: string | null
+          entry_inspection_done: boolean | null
+          exit_inspection_done: boolean | null
+          exit_inspection_due_date: string | null
+          keys_returned_at: string | null
+          latest_finalized_entry_inspection_date: string | null
+          latest_finalized_entry_inspection_id: string | null
+          latest_finalized_exit_inspection_date: string | null
+          latest_finalized_exit_inspection_id: string | null
+          lease_end_date: string | null
+          lease_id: string | null
+          organization_id: string | null
+          property_id: string | null
+          property_name: string | null
+          status: string | null
+          tenant_account_id: string | null
+          tenant_full_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "leases_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_effective_status"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "leases_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_accounts"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1128,11 +2088,18 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "leases_tenant_org_fk"
-            columns: ["organization_id", "tenant_account_id"]
+            foreignKeyName: "leases_property_org_fk"
+            columns: ["organization_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "properties_effective_status"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "leases_tenant_account_id_fkey"
+            columns: ["tenant_account_id"]
             isOneToOne: false
             referencedRelation: "tenant_accounts"
-            referencedColumns: ["organization_id", "id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1164,7 +2131,6 @@ export type Database = {
           organization_id: string | null
           period_end_date: string | null
           period_start_date: string | null
-          reservation_id: string | null
           status: string | null
           updated_at: string | null
         }
@@ -1177,18 +2143,107 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "payment_schedules_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "payment_schedules_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      properties_effective_status: {
+        Row: {
+          address_complement: string | null
+          city: string | null
+          country_code: string | null
+          created_at: string | null
+          effective_status: string | null
+          external_owner_id: string | null
+          id: string | null
+          location_type: string | null
+          name: string | null
+          neighborhood: string | null
+          organization_id: string | null
+          price: number | null
+          standard_check_in_time: string | null
+          standard_check_out_time: string | null
+          status: string | null
+          turnover_buffer_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          effective_status?: never
+          external_owner_id?: string | null
+          id?: string | null
+          location_type?: string | null
+          name?: string | null
+          neighborhood?: string | null
+          organization_id?: string | null
+          price?: number | null
+          standard_check_in_time?: string | null
+          standard_check_out_time?: string | null
+          status?: string | null
+          turnover_buffer_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          effective_status?: never
+          external_owner_id?: string | null
+          id?: string | null
+          location_type?: string | null
+          name?: string | null
+          neighborhood?: string | null
+          organization_id?: string | null
+          price?: number | null
+          standard_check_in_time?: string | null
+          standard_check_out_time?: string | null
+          status?: string | null
+          turnover_buffer_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "payment_schedules_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
+            foreignKeyName: "properties_country_code_fkey"
+            columns: ["country_code"]
             isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["organization_id", "id"]
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "properties_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1206,7 +2261,6 @@ export type Database = {
           lease_id: string | null
           observations: string | null
           organization_id: string | null
-          reservation_id: string | null
           tenant_comments: string | null
           tenant_validation_at: string | null
           tenant_validation_status: string | null
@@ -1225,7 +2279,6 @@ export type Database = {
           lease_id?: string | null
           observations?: string | null
           organization_id?: string | null
-          reservation_id?: string | null
           tenant_comments?: string | null
           tenant_validation_at?: string | null
           tenant_validation_status?: string | null
@@ -1244,7 +2297,6 @@ export type Database = {
           lease_id?: string | null
           observations?: string | null
           organization_id?: string | null
-          reservation_id?: string | null
           tenant_comments?: string | null
           tenant_validation_at?: string | null
           tenant_validation_status?: string | null
@@ -1266,23 +2318,89 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_activation_readiness"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_closure_status"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
+            foreignKeyName: "property_inspections_lease_org_fk"
+            columns: ["organization_id", "lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases_schedule_coverage"
+            referencedColumns: ["organization_id", "lease_id"]
+          },
+          {
             foreignKeyName: "property_inspections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "property_inspections_reservation_org_fk"
-            columns: ["organization_id", "reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["organization_id", "id"]
-          },
         ]
       }
     }
     Functions: {
+      accept_tenant_invitation_existing_account: {
+        Args: { p_token: string }
+        Returns: undefined
+      }
+      check_staff_invitation_existing_account: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
+      check_tenant_invitation_existing_account: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
+      create_property: {
+        Args: {
+          p_address_complement: string
+          p_city: string
+          p_country_code: string
+          p_location_type: string
+          p_name: string
+          p_neighborhood: string
+          p_organization_id: string
+          p_price: number
+        }
+        Returns: {
+          address_complement: string | null
+          city: string | null
+          country_code: string | null
+          created_at: string
+          external_owner_id: string | null
+          id: string
+          location_type: string
+          name: string
+          neighborhood: string | null
+          organization_id: string
+          price: number
+          standard_check_in_time: string | null
+          standard_check_out_time: string | null
+          status: string
+          turnover_buffer_days: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "properties"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      delete_lease_with_contract: {
+        Args: { p_lease_id: string }
+        Returns: undefined
+      }
       generate_payment_schedules_for_lease: {
         Args: {
           p_horizon_months?: number
@@ -1290,6 +2408,25 @@ export type Database = {
           p_prepaid_payment_method?: string
         }
         Returns: number
+      }
+      get_staff_invitation_preview: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          organization_name: string
+          role_code: string
+          status: string
+        }[]
+      }
+      get_tenant_invitation_preview: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          organization_name: string
+          status: string
+        }[]
       }
     }
     Enums: {
