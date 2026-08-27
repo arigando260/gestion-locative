@@ -53,12 +53,24 @@ export type CreateBuildingInput = {
 };
 
 // Écriture : {data, error} renvoyé tel quel, jamais throw — même convention
-// que createProperty (l'appelant décide comment le traduire). Pas de RPC ici
-// contrairement à create_property() : buildings_insert n'a pas
-// l'équivalent du piège RETURNING/agent_property_scope (aucune
-// auto-assignation posée à la création d'un immeuble), un insert direct
-// suffit.
+// que createProperty. RPC create_building() (Module 13c) et non un insert
+// direct : buildings_select est désormais scopée par agent_building_scope()
+// (Module 13c), donc un insert direct exposerait le même piège RETURNING/RLS
+// que create_property() avant le Module 12q -- le RPC pose l'auto-
+// assignation du créateur AVANT son propre `returning`, jamais soumis au
+// RETURNING/RLS de la table.
 export async function createBuilding(input: CreateBuildingInput) {
   const supabase = await createClient();
-  return supabase.from("buildings").insert(input).select().single();
+  const result = await supabase
+    .rpc("create_building", {
+      p_organization_id: input.organization_id,
+      p_name: input.name,
+      p_country_code: input.country_code,
+      p_city: input.city,
+      p_neighborhood: input.neighborhood,
+      p_address_complement: input.address_complement,
+      p_floors_count: input.floors_count,
+    })
+    .single();
+  return { data: result.data as Building, error: result.error };
 }
