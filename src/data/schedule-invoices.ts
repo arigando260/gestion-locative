@@ -75,7 +75,7 @@ export async function getInvoiceGenerationContext(
 
   const { data: lease, error: leaseError } = await supabase
     .from("leases")
-    .select("organization_id, tenant_account_id, organizations(name, address, phone, email), properties(name, address_complement)")
+    .select("organization_id, tenant_account_id, organizations(name, address, phone, email), properties(name)")
     .eq("id", leaseId)
     .maybeSingle();
 
@@ -83,11 +83,16 @@ export async function getInvoiceGenerationContext(
   if (!lease) return null;
 
   // Même correctif d'inférence many-to-one que data/payment-receipts.ts.
+  // Pas de resolve_property_address ici (contrairement à
+  // data/lease-contracts.ts, Module 13) : invoice-document.tsx n'affiche
+  // que propertyLabel (le nom du bien), jamais son adresse -- address_complement
+  // était déjà sélectionné mais jamais lu dans l'objet retourné avant ce
+  // ménage, colonne morte retirée au passage.
   const row = lease as unknown as {
     organization_id: string;
     tenant_account_id: string;
     organizations: { name: string; address: string | null; phone: string | null; email: string | null } | null;
-    properties: { name: string; address_complement: string | null } | null;
+    properties: { name: string } | null;
   };
 
   const { data: tenant } = await supabase

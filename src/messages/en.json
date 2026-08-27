@@ -10,6 +10,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "properties": "Properties",
+    "buildings": "Buildings",
     "maintenance": "Maintenance",
     "leaseTerminations": "Terminations",
     "tenants": "Tenants",
@@ -217,7 +218,30 @@
     "agentAssignmentSelectLabel": "Agent to assign",
     "agentAssignmentSubmit": "Assign",
     "agentAssignmentSubmitting": "Assigning...",
-    "agentAssignmentsNoneAvailable": "All agents in the organization are already assigned to this property."
+    "agentAssignmentsNoneAvailable": "All agents in the organization are already assigned to this property.",
+    "buildingLabel": "Building",
+    "noBuilding": "No building (standalone property)",
+    "createNewBuilding": "+ Create a new building",
+    "unitIdentifier": "Unit identifier (e.g. Apartment A1, 2nd floor)",
+    "attachBuildingTitle": "Attach to a building",
+    "attachBuildingSelectLabel": "Building",
+    "attachBuildingSubmit": "Attach to building",
+    "attachBuildingSubmitting": "Attaching...",
+    "attachBuildingNoneAvailable": "No building available in this organization."
+  },
+  "buildings": {
+    "title": "Buildings",
+    "createTitle": "Create a building",
+    "createNewInlineTitle": "New building",
+    "name": "Name",
+    "address": "Address",
+    "country": "Country",
+    "city": "City",
+    "neighborhood": "Neighborhood",
+    "addressComplement": "Address complement (optional)",
+    "floorsCount": "Number of floors (optional)",
+    "unitsCount": "Attached units",
+    "empty": "No buildings yet."
   },
   "leases": {
     "createTitle": "Create a lease",

@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getPropertiesWithEffectiveStatus } from "@/data/properties";
+import { getPropertiesWithEffectiveStatus, resolvePropertyAddresses } from "@/data/properties";
 import { getPropertyTypes } from "@/data/property-types";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { PropertyList } from "@/components/properties/property-list";
@@ -12,6 +12,7 @@ export default async function PropertiesPage() {
     getPropertyTypes(),
     getCurrentUserPermissions(),
   ]);
+  const addresses = await resolvePropertyAddresses(properties.map((p) => p.id));
   const t = await getTranslations("properties");
 
   return (
@@ -26,7 +27,7 @@ export default async function PropertiesPage() {
           </Button>
         )}
       </div>
-      <PropertyList properties={properties} propertyTypes={propertyTypes} />
+      <PropertyList properties={properties} propertyTypes={propertyTypes} addresses={addresses} />
     </div>
   );
 }

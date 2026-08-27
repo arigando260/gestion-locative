@@ -3,6 +3,7 @@ import { getPropertyTypes } from "@/data/property-types";
 import { getCountries } from "@/data/countries";
 import { getCurrentProfile } from "@/data/session";
 import { getOrganization } from "@/data/organizations";
+import { listBuildings } from "@/data/buildings";
 import { PropertyForm } from "@/components/properties/property-form";
 
 export default async function NewPropertyPage() {
@@ -15,7 +16,10 @@ export default async function NewPropertyPage() {
   // organization_id, un aller supplémentaire est nécessaire pour son
   // country_code.
   const profile = await getCurrentProfile();
-  const organization = profile ? await getOrganization(profile.organization_id) : null;
+  const [organization, buildings] = await Promise.all([
+    profile ? getOrganization(profile.organization_id) : null,
+    profile ? listBuildings(profile.organization_id) : [],
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -23,6 +27,7 @@ export default async function NewPropertyPage() {
       <PropertyForm
         propertyTypes={propertyTypes}
         countries={countries}
+        buildings={buildings}
         defaultCountryCode={organization?.country_code}
       />
     </div>

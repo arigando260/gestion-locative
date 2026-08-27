@@ -2,17 +2,11 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
 
-// address (Module 12c, renommée address_complement) + country_code/city/
-// neighborhood (Module 12c, nouvelles colonnes) : database.types.ts n'a pas
-// encore été régénéré, le type généré porte encore l'ancien nom "address"
-// et ignore les 3 nouvelles colonnes. Omit + extension plutôt qu'une
-// réécriture complète, même patron que data/organizations.ts.
-export type Property = Omit<Tables<"properties">, "address"> & {
-  address_complement: string | null;
-  country_code: string | null;
-  city: string | null;
-  neighborhood: string | null;
-};
+// database.types.ts régénéré depuis le Module 13 (buildings) : plus besoin
+// du Omit + extension manuelle utilisé jusqu'ici (address_complement/
+// country_code/city/neighborhood/building_id sont désormais tous
+// correctement inférés depuis le fichier généré).
+export type Property = Tables<"properties">;
 export type PropertyStatus = "disponible" | "occupe" | "en_travaux";
 
 // Lecture : erreur inattendue => on laisse remonter (error.tsx), ce n'est
@@ -82,20 +76,23 @@ export async function getPropertyWithEffectiveStatus(
   return data as PropertyWithEffectiveStatus | null;
 }
 
-// Écrit à la main plutôt que dérivé de TablesInsert<"properties"> (même
-// raison que Property ci-dessus) : country_code/city/neighborhood
-// obligatoires ici (décision Module 12c -- l'écran de création les exige,
-// même si la colonne reste nullable en base pour les 29 biens dev déjà
-// existants) ; address_complement reste le seul champ optionnel.
+// Écrit à la main plutôt que dérivé de TablesInsert<"properties"> :
+// country_code/city/neighborhood obligatoires quand building_id est absent
+// (décision Module 12c -- l'écran de création les exige, même si la colonne
+// reste nullable en base) ; nuls quand building_id est fourni (Module 13 --
+// properties_building_address_exclusive, forcé de toute façon côté serveur
+// par create_property(), mais reflété ici pour que l'appelant n'ait pas à
+// deviner). address_complement reste toujours optionnel dans les deux cas.
 export type CreatePropertyInput = {
   organization_id: string;
   name: string;
-  country_code: string;
-  city: string;
-  neighborhood: string;
+  country_code: string | null;
+  city: string | null;
+  neighborhood: string | null;
   address_complement: string | null;
   price: number;
   location_type: string;
+  building_id: string | null;
 };
 
 // Écriture : {data, error} renvoyé tel quel, jamais throw — c'est le Server
@@ -136,7 +133,74 @@ export async function createProperty(input: CreatePropertyInput) {
       p_address_complement: input.address_complement,
       p_price: input.price,
       p_location_type: input.location_type,
+      p_building_id: input.building_id,
     })
     .single();
   return { data: result.data as Property, error: result.error };
+}
+
+// Attache un bien existant à un immeuble : update ciblé (building_id +
+// adresse propre vidée), pas un formulaire d'édition générique. La vraie
+// garantie reste properties_update (has_permission('properties','update')
+// AND agent_property_scope) et le CHECK properties_building_address_exclusive
+// côté base (Module 13) -- vidés ici pour ne pas dépendre d'un aller-retour
+// en erreur si l'appelant oubliait de le faire.
+export async function attachPropertyToBuilding(propertyId: string, buildingId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("properties")
+    .update({ building_id: buildingId, country_code: null, city: null, neighborhood: null })
+    .eq("id", propertyId)
+    .select()
+    .single();
+}
+
+export type ResolvedPropertyAddress = {
+  formatted_address: string | null;
+  country_code: string | null;
+  city: string | null;
+  neighborhood: string | null;
+  address_complement: string | null;
+  unit_complement: string | null;
+  building_id: string | null;
+  building_name: string | null;
+};
+
+// public.resolve_property_address() (Module 13b, wrapper SECURITY INVOKER
+// de private.resolve_property_address, Module 13) : adresse effective d'un
+// bien (propre, ou héritée de son immeuble + identifiant d'unité). Ne throw
+// jamais : un bien introuvable ou invisible pour l'appelant renvoie
+// simplement un jeu de résultats vide (comportement du wrapper), traduit
+// ici en valeurs null plutôt qu'en erreur.
+export async function resolvePropertyAddress(propertyId: string): Promise<ResolvedPropertyAddress> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("resolve_property_address", { p_property_id: propertyId })
+    .maybeSingle();
+
+  if (error) throw error;
+  return (
+    (data as ResolvedPropertyAddress | null) ?? {
+      formatted_address: null,
+      country_code: null,
+      city: null,
+      neighborhood: null,
+      address_complement: null,
+      unit_complement: null,
+      building_id: null,
+      building_name: null,
+    }
+  );
+}
+
+// Pour une liste (écran /properties) : un appel RPC par bien via
+// Promise.all plutôt qu'une vue dédiée -- acceptable à l'échelle dev
+// actuelle (quelques dizaines de biens), mais un N+1 réel si le volume
+// grandit. À revisiter (vue SQL type properties_effective_status) si ça
+// devient sensible, hors périmètre ici.
+export async function resolvePropertyAddresses(
+  propertyIds: string[]
+): Promise<Record<string, ResolvedPropertyAddress>> {
+  const resolved = await Promise.all(propertyIds.map((id) => resolvePropertyAddress(id)));
+  return Object.fromEntries(propertyIds.map((id, index) => [id, resolved[index]]));
 }

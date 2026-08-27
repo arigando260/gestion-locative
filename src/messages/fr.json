@@ -10,6 +10,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "properties": "Biens",
+    "buildings": "Immeubles",
     "maintenance": "Maintenance",
     "leaseTerminations": "Résiliations",
     "tenants": "Locataires",
@@ -217,7 +218,30 @@
     "agentAssignmentSelectLabel": "Agent à assigner",
     "agentAssignmentSubmit": "Assigner",
     "agentAssignmentSubmitting": "Assignation...",
-    "agentAssignmentsNoneAvailable": "Tous les agents de l'organisation sont déjà assignés à ce bien."
+    "agentAssignmentsNoneAvailable": "Tous les agents de l'organisation sont déjà assignés à ce bien.",
+    "buildingLabel": "Immeuble",
+    "noBuilding": "Aucun immeuble (bien autonome)",
+    "createNewBuilding": "+ Créer un nouvel immeuble",
+    "unitIdentifier": "Identifiant de l'unité (ex: Appartement A1, 2e étage)",
+    "attachBuildingTitle": "Rattacher à un immeuble",
+    "attachBuildingSelectLabel": "Immeuble",
+    "attachBuildingSubmit": "Rattacher à un immeuble",
+    "attachBuildingSubmitting": "Rattachement...",
+    "attachBuildingNoneAvailable": "Aucun immeuble disponible dans cette organisation."
+  },
+  "buildings": {
+    "title": "Immeubles",
+    "createTitle": "Créer un immeuble",
+    "createNewInlineTitle": "Nouvel immeuble",
+    "name": "Nom",
+    "address": "Adresse",
+    "country": "Pays",
+    "city": "Ville",
+    "neighborhood": "Quartier",
+    "addressComplement": "Complément d'adresse (optionnel)",
+    "floorsCount": "Nombre d'étages (optionnel)",
+    "unitsCount": "Unités rattachées",
+    "empty": "Aucun immeuble pour l'instant."
   },
   "leases": {
     "createTitle": "Créer un bail",

@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { resolvePropertyAddress } from "@/data/properties";
 
 // Types écrits à la main : database.types.ts n'a pas encore été régénéré
 // depuis le Module 10 (lease_contracts / leases_activation_readiness en
@@ -96,7 +97,7 @@ export async function getLeaseContractRenderData(
   const { data: lease, error } = await supabase
     .from("leases")
     .select(
-      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, special_terms, organizations(name, address, phone, email, special_terms), properties(name, address_complement)"
+      "organization_id, tenant_account_id, rent_amount, payment_frequency, security_deposit_amount, utility_deposit_amount, start_date, end_date, special_terms, organizations(name, address, phone, email, special_terms), properties(id, name)"
     )
     .eq("id", leaseId)
     .maybeSingle();
@@ -122,7 +123,7 @@ export async function getLeaseContractRenderData(
       email: string | null;
       special_terms: string | null;
     } | null;
-    properties: { name: string; address_complement: string | null } | null;
+    properties: { id: string; name: string } | null;
   };
 
   const { data: tenant } = await supabase
@@ -131,12 +132,19 @@ export async function getLeaseContractRenderData(
     .eq("id", row.tenant_account_id)
     .maybeSingle();
 
+  // Adresse effective (propre ou héritée d'un immeuble, Module 13) résolue
+  // côté base — jamais address_complement brut, qui ne porte plus qu'un
+  // identifiant d'unité pour un bien rattaché à un immeuble.
+  const resolvedAddress = row.properties
+    ? await resolvePropertyAddress(row.properties.id)
+    : null;
+
   return {
     organizationId: row.organization_id,
     organization: row.organizations ?? { name: "—", address: null, phone: null, email: null },
     tenantName: tenant?.full_name ?? "—",
     propertyLabel: row.properties?.name ?? "—",
-    propertyAddress: row.properties?.address_complement ?? "—",
+    propertyAddress: resolvedAddress?.formatted_address ?? "—",
     rentAmount: row.rent_amount,
     paymentFrequency: row.payment_frequency,
     securityDepositAmount: row.security_deposit_amount,

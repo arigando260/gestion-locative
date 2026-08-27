@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { PropertyWithEffectiveStatus, PropertyStatus } from "@/data/properties";
+import type {
+  PropertyWithEffectiveStatus,
+  PropertyStatus,
+  ResolvedPropertyAddress,
+} from "@/data/properties";
 import { getPropertyTypeLabel, type PropertyType } from "@/lib/property-type-labels";
 import { formatPropertyAddress } from "@/lib/format-property-address";
 
@@ -20,12 +24,25 @@ const STATUS_KEY: Record<PropertyStatus, string> = {
   en_travaux: "statusMaintenance",
 };
 
+const EMPTY_ADDRESS: ResolvedPropertyAddress = {
+  formatted_address: null,
+  country_code: null,
+  city: null,
+  neighborhood: null,
+  address_complement: null,
+  unit_complement: null,
+  building_id: null,
+  building_name: null,
+};
+
 export async function PropertyList({
   properties,
   propertyTypes,
+  addresses,
 }: {
   properties: PropertyWithEffectiveStatus[];
   propertyTypes: PropertyType[];
+  addresses: Record<string, ResolvedPropertyAddress>;
 }) {
   const t = await getTranslations("properties");
 
@@ -61,7 +78,7 @@ export async function PropertyList({
                     {property.name}
                   </Link>
                 </TableCell>
-                <TableCell>{formatPropertyAddress(property)}</TableCell>
+                <TableCell>{formatPropertyAddress(addresses[property.id] ?? EMPTY_ADDRESS)}</TableCell>
                 <TableCell>
                   {getPropertyTypeLabel(propertyTypes, property.location_type, t)}
                 </TableCell>
@@ -88,7 +105,7 @@ export async function PropertyList({
                   </Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {formatPropertyAddress(property)}
+                  {formatPropertyAddress(addresses[property.id] ?? EMPTY_ADDRESS)}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {getPropertyTypeLabel(propertyTypes, property.location_type, t)}{" "}

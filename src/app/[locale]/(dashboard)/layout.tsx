@@ -36,6 +36,7 @@ export default async function DashboardLayout({
   // pas seulement un masquage côté nav).
   const permissions = await getCurrentUserPermissions();
   const canManageTeam = can(permissions, "users", "create");
+  const canViewBuildings = can(permissions, "buildings", "read");
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -53,6 +54,11 @@ export default async function DashboardLayout({
             <Link href="/properties" className="hover:underline">
               {t("properties")}
             </Link>
+            {canViewBuildings ? (
+              <Link href="/buildings" className="hover:underline">
+                {t("buildings")}
+              </Link>
+            ) : null}
             <Link href="/maintenance" className="hover:underline">
               {t("maintenance")}
             </Link>
