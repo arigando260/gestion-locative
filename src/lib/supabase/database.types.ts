@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      buildings: {
+        Row: {
+          address_complement: string | null
+          city: string | null
+          country_code: string | null
+          created_at: string
+          floors_count: number | null
+          id: string
+          name: string
+          neighborhood: string | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          floors_count?: number | null
+          id?: string
+          name: string
+          neighborhood?: string | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          address_complement?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          floors_count?: number | null
+          id?: string
+          name?: string
+          neighborhood?: string | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buildings_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "buildings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -1257,6 +1311,7 @@ export type Database = {
       properties: {
         Row: {
           address_complement: string | null
+          building_id: string | null
           city: string | null
           country_code: string | null
           created_at: string
@@ -1275,6 +1330,7 @@ export type Database = {
         }
         Insert: {
           address_complement?: string | null
+          building_id?: string | null
           city?: string | null
           country_code?: string | null
           created_at?: string
@@ -1293,6 +1349,7 @@ export type Database = {
         }
         Update: {
           address_complement?: string | null
+          building_id?: string | null
           city?: string | null
           country_code?: string | null
           created_at?: string
@@ -1310,6 +1367,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "properties_building_org_fk"
+            columns: ["organization_id", "building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["organization_id", "id"]
+          },
           {
             foreignKeyName: "properties_country_code_fkey"
             columns: ["country_code"]
@@ -2364,6 +2428,7 @@ export type Database = {
       create_property: {
         Args: {
           p_address_complement: string
+          p_building_id?: string
           p_city: string
           p_country_code: string
           p_location_type: string
@@ -2374,6 +2439,7 @@ export type Database = {
         }
         Returns: {
           address_complement: string | null
+          building_id: string | null
           city: string | null
           country_code: string | null
           created_at: string
