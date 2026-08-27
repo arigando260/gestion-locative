@@ -241,7 +241,8 @@
     "addressComplement": "Complément d'adresse (optionnel)",
     "floorsCount": "Nombre d'étages (optionnel)",
     "unitsCount": "Logements",
-    "empty": "Aucun immeuble pour l'instant."
+    "empty": "Aucun immeuble pour l'instant.",
+    "backToList": "Retour à la liste des immeubles"
   },
   "leases": {
     "createTitle": "Créer un bail",
@@ -618,7 +619,23 @@
     "noInvoices": "Aucune facture émise pour l'instant.",
     "invoiceGeneratedOn": "Émise le",
     "downloadInvoice": "Télécharger",
-    "preparingDownload": "Préparation..."
+    "preparingDownload": "Préparation...",
+    "buildingInvoicingTitle": "Facturation groupée",
+    "monthLabel": "Mois",
+    "applyMonth": "Afficher",
+    "summaryTotalProperties": "Logements dans l'immeuble",
+    "summaryToInvoice": "À facturer",
+    "summaryVacant": "Vacants",
+    "summaryAlreadyInvoiced": "Déjà facturés ce mois",
+    "summaryNoSchedule": "{count, plural, one {# bail actif sans échéance ce mois-ci} other {# baux actifs sans échéance ce mois-ci}}",
+    "noLeasesToInvoice": "Aucun logement à facturer pour ce mois.",
+    "generateBuildingInvoices": "{count, plural, one {Générer la facture} other {Générer les # factures}}",
+    "generatingBuildingInvoices": "Génération en cours...",
+    "customizeSelection": "Personnaliser la sélection",
+    "customFormSubmit": "Générer les factures sélectionnées",
+    "backToSummary": "Retour au résumé",
+    "resultSuccess": "Facture générée",
+    "resultFailure": "Échec"
   },
   "errors": {
     "uniqueViolation": "Cette donnée existe déjà.",

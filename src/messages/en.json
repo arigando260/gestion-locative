@@ -241,7 +241,8 @@
     "addressComplement": "Address complement (optional)",
     "floorsCount": "Number of floors (optional)",
     "unitsCount": "Attached units",
-    "empty": "No buildings yet."
+    "empty": "No buildings yet.",
+    "backToList": "Back to buildings"
   },
   "leases": {
     "createTitle": "Create a lease",
@@ -618,7 +619,23 @@
     "noInvoices": "No invoices issued yet.",
     "invoiceGeneratedOn": "Issued on",
     "downloadInvoice": "Download",
-    "preparingDownload": "Preparing..."
+    "preparingDownload": "Preparing...",
+    "buildingInvoicingTitle": "Bulk invoicing",
+    "monthLabel": "Month",
+    "applyMonth": "Show",
+    "summaryTotalProperties": "Properties in this building",
+    "summaryToInvoice": "To invoice",
+    "summaryVacant": "Vacant",
+    "summaryAlreadyInvoiced": "Already invoiced this month",
+    "summaryNoSchedule": "{count, plural, one {# active lease with no schedule this month} other {# active leases with no schedule this month}}",
+    "noLeasesToInvoice": "No property to invoice for this month.",
+    "generateBuildingInvoices": "{count, plural, one {Generate invoice} other {Generate # invoices}}",
+    "generatingBuildingInvoices": "Generating...",
+    "customizeSelection": "Customize selection",
+    "customFormSubmit": "Generate selected invoices",
+    "backToSummary": "Back to summary",
+    "resultSuccess": "Invoice generated",
+    "resultFailure": "Failed"
   },
   "errors": {
     "uniqueViolation": "This entry already exists.",

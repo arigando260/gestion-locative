@@ -17,27 +17,26 @@ import { getTranslations } from "next-intl/server";
 import type { ActionState } from "./properties";
 import type { DocumentUrlResult } from "./payment-receipts";
 
-// Toujours synchrone (rendu + upload + écriture des 2 tables en un seul
-// appel) — geste toujours délibéré du staff, jamais de trigger côté base
-// (voir conception Module 9). generated_by = profile.id : identité liée,
-// même principe que reported_by_staff_id ailleurs.
-export async function generateScheduleInvoiceAction(
-  _prevState: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const profile = await getCurrentProfile();
-  if (!profile) {
-    return { success: false, message: "Session expirée, reconnectez-vous." };
-  }
+// Cœur partagé, extrait de generateScheduleInvoiceAction (module facturation
+// groupée par immeuble) : aucune logique changée, seulement sortie de la
+// lecture de FormData/ActionState pour être appelable aussi bien par le
+// formulaire à un seul bail (ci-dessous) que par la génération groupée
+// (actions/building-invoicing.ts), bail par bail, sans dupliquer le rendu
+// PDF/upload/écriture des 2 tables. Toujours synchrone (rendu + upload +
+// écriture des 2 tables en un seul appel) — geste toujours délibéré du
+// staff, jamais de trigger côté base (voir conception Module 9).
+export async function generateScheduleInvoiceForLease(input: {
+  leaseId: string;
+  scheduleIds: string[];
+  generatedBy: string;
+}): Promise<{ success: boolean; message?: string; invoiceId?: string }> {
+  const { leaseId, scheduleIds, generatedBy } = input;
 
-  const lease_id = String(formData.get("lease_id") ?? "");
-  const scheduleIds = formData.getAll("schedule_ids").map(String);
-
-  if (!lease_id || scheduleIds.length === 0) {
+  if (scheduleIds.length === 0) {
     return { success: false, message: "Sélectionnez au moins une échéance." };
   }
 
-  const context = await getInvoiceGenerationContext(lease_id, scheduleIds);
+  const context = await getInvoiceGenerationContext(leaseId, scheduleIds);
   if (!context) {
     return {
       success: false,
@@ -84,9 +83,9 @@ export async function generateScheduleInvoiceAction(
   const { error: insertError } = await createScheduleInvoiceRecord({
     id: invoiceId,
     organization_id: context.organizationId,
-    lease_id,
+    lease_id: leaseId,
     storage_path: storagePath,
-    generated_by: profile.id,
+    generated_by: generatedBy,
   });
 
   if (insertError) {
@@ -103,10 +102,39 @@ export async function generateScheduleInvoiceAction(
     return { success: false, message: await toUserMessage(itemsError) };
   }
 
-  revalidatePath(`/leases/${lease_id}`);
-  revalidatePath(`/tenant/leases/${lease_id}`);
+  revalidatePath(`/leases/${leaseId}`);
+  revalidatePath(`/tenant/leases/${leaseId}`);
   const t = await getTranslations("billing");
-  return { success: true, message: t("invoiceGenerated") };
+  return { success: true, message: t("invoiceGenerated"), invoiceId };
+}
+
+// Wrapper FormData/ActionState pour le formulaire à un seul bail
+// (components/billing/invoice-generate-form.tsx) — comportement et
+// signature strictement inchangés par l'extraction ci-dessus : mêmes
+// validations, mêmes messages, même ordre.
+export async function generateScheduleInvoiceAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { success: false, message: "Session expirée, reconnectez-vous." };
+  }
+
+  const lease_id = String(formData.get("lease_id") ?? "");
+  const scheduleIds = formData.getAll("schedule_ids").map(String);
+
+  if (!lease_id || scheduleIds.length === 0) {
+    return { success: false, message: "Sélectionnez au moins une échéance." };
+  }
+
+  const result = await generateScheduleInvoiceForLease({
+    leaseId: lease_id,
+    scheduleIds,
+    generatedBy: profile.id,
+  });
+
+  return { success: result.success, message: result.message };
 }
 
 // Partagée staff/locataire : storage_path est toujours déjà connu de

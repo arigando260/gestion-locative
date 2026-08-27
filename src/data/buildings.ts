@@ -26,6 +26,22 @@ export async function listBuildings(organizationId: string): Promise<BuildingWit
   });
 }
 
+// Fiche immeuble (module facturation groupée) : lecture d'un seul immeuble,
+// même patron que getProperty. RLS buildings_select fait autorité — un
+// immeuble hors organisation ou hors permission renvoie simplement null,
+// jamais une erreur.
+export async function getBuilding(id: string): Promise<Building | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("buildings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 export type CreateBuildingInput = {
   organization_id: string;
   name: string;

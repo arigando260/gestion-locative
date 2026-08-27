@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import {
   Table,
   TableBody,
@@ -8,14 +9,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import type { BuildingWithUnitsCount } from "@/data/buildings";
+import type { Building, BuildingWithUnitsCount } from "@/data/buildings";
 
 // Formatage propre à l'immeuble lui-même (pas d'héritage/résolution comme
 // pour un bien -- un immeuble EST la source de l'adresse, jamais rattaché à
 // autre chose) : même convention visuelle que formatPropertyAddress
 // ("Quartier, Ville — Complément"), mais pas la même fonction, ce n'est pas
 // la logique de private.resolve_property_address qu'on dupliquerait ici.
-function formatBuildingAddress(building: BuildingWithUnitsCount): string {
+// Prend Building (pas BuildingWithUnitsCount) : n'a besoin que des champs
+// d'adresse, réutilisable par la fiche immeuble
+// (app/[locale]/(dashboard)/buildings/[buildingId]/page.tsx) qui n'a pas de
+// units_count sous la main -- BuildingWithUnitsCount reste assignable ici
+// puisqu'elle étend Building.
+export function formatBuildingAddress(building: Building): string {
   const location = [building.neighborhood, building.city].filter(Boolean).join(", ");
   if (location && building.address_complement) {
     return `${location} — ${building.address_complement}`;
@@ -46,7 +52,11 @@ export async function BuildingList({ buildings }: { buildings: BuildingWithUnits
           <TableBody>
             {buildings.map((building) => (
               <TableRow key={building.id}>
-                <TableCell className="font-medium">{building.name}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/buildings/${building.id}`} className="hover:underline">
+                    {building.name}
+                  </Link>
+                </TableCell>
                 <TableCell>{formatBuildingAddress(building)}</TableCell>
                 <TableCell>{building.units_count}</TableCell>
               </TableRow>
@@ -58,7 +68,9 @@ export async function BuildingList({ buildings }: { buildings: BuildingWithUnits
         {buildings.map((building) => (
           <Card key={building.id}>
             <CardContent className="flex flex-col gap-1">
-              <span className="font-medium">{building.name}</span>
+              <Link href={`/buildings/${building.id}`} className="font-medium hover:underline">
+                {building.name}
+              </Link>
               <span className="text-sm text-muted-foreground">
                 {formatBuildingAddress(building)}
               </span>
