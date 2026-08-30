@@ -96,7 +96,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen">
       <Sidebar
         appName={tc("appName")}
-        appSubtitle={isOwnerOrg ? td("ownerTagline") : t("dashboard")}
+        appSubtitle={isOwnerOrg ? td("ownerTagline") : tc("appTagline")}
         sections={sections}
         footerName={profile.full_name ?? profile.email}
         footerSubtitle={organization?.name ?? ""}

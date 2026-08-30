@@ -93,3 +93,25 @@ export function formatDateTime(value: string | null | undefined, locale: string)
 
   return `${Number(day)} ${monthName} ${year}, ${hour}:${minute}`;
 }
+
+// Nombre de jours écoulés depuis une colonne "date" (YYYY-MM-DD), comparée
+// à la date du jour en UTC -- pas de new Date(value) direct (même
+// précaution de fuseau horaire que formatDate ci-dessus), et l'appel à
+// `new Date()`/Date.now() reste dans ce module plutôt qu'inline dans un
+// composant (react-hooks/purity : un Server Component doit rester une
+// fonction pure, l'horloge système est lue ici une seule fois, à l'écart).
+export function daysSince(value: string | null | undefined): number | null {
+  if (!value) return null;
+
+  const match = DATE_RE.exec(value);
+  if (!match) {
+    console.error("daysSince: valeur inattendue", { value });
+    return null;
+  }
+
+  const [, year, month, day] = match;
+  const dueUtc = Date.UTC(Number(year), Number(month) - 1, Number(day));
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.floor((todayUtc - dueUtc) / 86_400_000);
+}

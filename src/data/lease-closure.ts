@@ -127,3 +127,28 @@ export async function getLeasesPendingClosure(
   if (error) throw error;
   return ((data ?? []) as LeaseClosureStatus[]).filter(isLeaseClosureEngaged);
 }
+
+// Un seul jeu d'ids de biens "en préparation de sortie" (bail en clôture
+// engagée) -- source unique pour la puce "État du parc" du tableau de bord
+// ET le filtre de /properties, jamais deux calculs séparés qui pourraient
+// diverger. Bâti sur getLeasesPendingClosure ci-dessus, pas une nouvelle
+// requête.
+export async function getClosurePendingPropertyIds(organizationId: string): Promise<Set<string>> {
+  const leases = await getLeasesPendingClosure(organizationId);
+  return new Set(leases.map((l) => l.property_id));
+}
+
+export type PropertyParkStatus = "occupe" | "disponible" | "en_travaux" | "en_preparation_sortie";
+
+// Statut "parc" effectif d'un bien : la clôture de bail engagée prime sur
+// le statut brut (occupe/disponible/en_travaux) -- un bien en préparation
+// de sortie ne compte jamais aussi comme "occupé". Même règle utilisée par
+// la puce du tableau de bord et le filtre /properties, une seule
+// définition.
+export function resolvePropertyParkStatus(
+  propertyId: string,
+  rawStatus: string,
+  closurePropertyIds: ReadonlySet<string>
+): PropertyParkStatus {
+  return closurePropertyIds.has(propertyId) ? "en_preparation_sortie" : (rawStatus as PropertyParkStatus);
+}

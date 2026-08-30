@@ -1,19 +1,37 @@
 import { getTranslations } from "next-intl/server";
-import { redirect } from "@/i18n/navigation";
+import { redirect, Link } from "@/i18n/navigation";
 import { getCurrentProfile, getCurrentStaffRole } from "@/data/session";
 import { getCurrentUserPermissions } from "@/data/permissions";
 import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
 import { getDashboardStats } from "@/data/dashboard-stats";
 import { getPropertiesWithEffectiveStatus } from "@/data/properties";
 import { getOrganization } from "@/data/organizations";
-import { PROPERTY_STATUS_KEY } from "@/components/properties/property-list";
-import { formatDate } from "@/lib/format-date";
+import { getClosurePendingPropertyIds, resolvePropertyParkStatus } from "@/data/lease-closure";
+import { formatDate, daysSince } from "@/lib/format-date";
 import { formatCompactCurrency } from "@/lib/format-currency";
+import { cn } from "@/lib/utils";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { AlertRow } from "@/components/dashboard/alert-row";
 import { AgentTodayView } from "@/components/dashboard/agent-today-view";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+// Ordre d'affichage fixe des chips "État du parc" (pas l'ordre naturel des
+// biens) + couleur de puce par catégorie -- même palette sémantique que le
+// reste du tableau de bord.
+const PARK_ORDER = ["occupe", "disponible", "en_preparation_sortie", "en_travaux"] as const;
+const PARK_LABEL_KEY: Record<(typeof PARK_ORDER)[number], string> = {
+  occupe: "parkOccupied",
+  disponible: "parkAvailable",
+  en_preparation_sortie: "parkClosurePending",
+  en_travaux: "parkUnavailable",
+};
+const PARK_DOT_CLASS: Record<(typeof PARK_ORDER)[number], string> = {
+  occupe: "bg-status-success-fg",
+  disponible: "bg-[#a1a1aa]",
+  en_preparation_sortie: "bg-status-warning-fg",
+  en_travaux: "bg-[#a1a1aa]",
+};
 
 type AlertRowProps = React.ComponentProps<typeof AlertRow>;
 
@@ -47,27 +65,32 @@ export default async function DashboardPage({
   // s'ajoute dans data/dashboard-alerts.ts, jamais en dupliquant un fetch de
   // plus ici. Cette page ne fait que mettre en forme ce tableau pour
   // l'affichage.
-  const [alerts, stats, properties, organization] = await Promise.all([
+  const [alerts, stats, properties, organization, closurePropertyIds] = await Promise.all([
     getDashboardAlerts(profile.organization_id, permissions),
     getDashboardStats(profile.organization_id),
     getPropertiesWithEffectiveStatus(),
     getOrganization(profile.organization_id),
+    getClosurePendingPropertyIds(profile.organization_id),
   ]);
   // "Espace propriétaire" (maquette) : même vue, seule l'accroche change
   // selon organization_type -- voir (dashboard)/layout.tsx pour la même
   // logique côté tagline sidebar.
   const isOwnerOrg = organization?.organization_type === "proprietaire";
+  const oldestOverdueDays = daysSince(stats.oldestOverdueDueDate);
 
   const t = await getTranslations("dashboard");
   const tdep = await getTranslations("deposits");
-  const tprop = await getTranslations("properties");
   const DEPOSIT_TYPE_KEY: Record<string, string> = {
     avance_garantie: "typeAvanceGarantie",
     caution_utilities: "typeCautionUtilities",
   };
 
+  // resolvePropertyParkStatus (data/lease-closure.ts) est la même fonction
+  // utilisée par le filtre de /properties -- une seule définition de "en
+  // préparation de sortie", jamais recalculée séparément ici.
   const parkByStatus = properties.reduce<Record<string, number>>((acc, p) => {
-    acc[p.effective_status] = (acc[p.effective_status] ?? 0) + 1;
+    const bucket = resolvePropertyParkStatus(p.id, p.effective_status, closurePropertyIds);
+    acc[bucket] = (acc[bucket] ?? 0) + 1;
     return acc;
   }, {});
 
@@ -140,7 +163,11 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label={t("statProperties")} value={String(stats.propertiesCount)} />
+        <StatTile
+          label={t("statProperties")}
+          value={String(stats.propertiesCount)}
+          meta={t("statPropertiesMeta", { count: stats.buildingsCount })}
+        />
         <StatTile
           label={t("statOccupancy")}
           value={`${stats.occupancyRate} %`}
@@ -149,23 +176,43 @@ export default async function DashboardPage({
         <StatTile
           label={t("statRent")}
           value={formatCompactCurrency(stats.rentThisMonth, locale)}
+          meta={t("statRentMeta", {
+            amount: formatCompactCurrency(stats.collectedThisMonth, locale),
+            rate: stats.collectedRate,
+          })}
         />
         <StatTile
           label={t("statDue")}
-          value={formatCompactCurrency(stats.dueThisMonth, locale)}
+          value={formatCompactCurrency(stats.overdueAmount, locale)}
+          meta={
+            stats.overdueLeasesCount > 0
+              ? t("statDueMeta", {
+                  count: stats.overdueLeasesCount,
+                  days: oldestOverdueDays ?? 0,
+                })
+              : undefined
+          }
           valueClassName="text-status-danger-fg"
         />
       </div>
 
       {Object.keys(parkByStatus).length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(parkByStatus).map(([status, count]) => (
-            <Badge key={status} variant="secondary" className="px-2.5 py-1 text-[12px]">
-              {count}{" "}
-              {tprop(PROPERTY_STATUS_KEY[status as keyof typeof PROPERTY_STATUS_KEY] ?? "statusAvailable")}
-            </Badge>
+        <Card className="flex-row flex-wrap items-center gap-2 px-[18px] py-4">
+          <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+            {t("parkTitle")}
+          </span>
+          {PARK_ORDER.filter((status) => (parkByStatus[status] ?? 0) > 0).map((status) => (
+            <Link key={status} href={`/properties?status=${status}`}>
+              <Badge
+                variant="secondary"
+                className="gap-1.5 px-2.5 py-1 text-[12px] hover:bg-muted"
+              >
+                <span className={cn("size-[7px] shrink-0 rounded-full", PARK_DOT_CLASS[status])} />
+                {t(PARK_LABEL_KEY[status], { count: parkByStatus[status] })}
+              </Badge>
+            </Link>
           ))}
-        </div>
+        </Card>
       ) : null}
 
       <Card className="p-0">
