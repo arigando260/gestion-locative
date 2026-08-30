@@ -1,8 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import { Link, redirect } from "@/i18n/navigation";
+import { redirect } from "@/i18n/navigation";
 import { getCurrentProfile, getCurrentTenant } from "@/data/session";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { Sidebar, type SidebarNavItem, type SidebarSection } from "@/components/layout/sidebar";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { Home, Wrench, FileMinus2 } from "lucide-react";
 
 export default async function TenantLayout({
   children,
@@ -25,29 +28,39 @@ export default async function TenantLayout({
   const t = await getTranslations("tenant");
   const tc = await getTranslations("common");
 
+  const navItems: SidebarNavItem[] = [
+    { href: "/tenant", label: t("home"), icon: <Home className="size-[18px]" /> },
+    { href: "/tenant/maintenance", label: t("maintenance"), icon: <Wrench className="size-[18px]" /> },
+    {
+      href: "/tenant/lease-terminations",
+      label: t("leaseTerminations"),
+      icon: <FileMinus2 className="size-[18px]" />,
+    },
+  ];
+  const sections: SidebarSection[] = [{ label: "", items: navItems }];
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-          <span className="text-sm font-semibold">{tc("appName")}</span>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/tenant" className="hover:underline">
-              {t("myLeases")}
-            </Link>
-            <Link href="/tenant/maintenance" className="hover:underline">
-              {t("maintenance")}
-            </Link>
-            <Link href="/tenant/lease-terminations" className="hover:underline">
-              {t("leaseTerminations")}
-            </Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <LocaleSwitcher />
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+    <div className="flex min-h-screen">
+      <div className="hidden md:block">
+        <Sidebar
+          appName={tc("appName")}
+          appSubtitle={t("portalTitle")}
+          sections={sections}
+          footerName={tenant.full_name ?? tenant.email}
+          footerSubtitle={t("myLeases")}
+        />
+      </div>
+      <div className="flex min-h-screen flex-1 flex-col">
+        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6 md:justify-end">
+          <span className="text-sm font-semibold md:hidden">{tc("appName")}</span>
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher />
+            <LogoutButton />
+          </div>
+        </header>
+        <main className="flex-1 px-4 py-6 pb-20 sm:px-6 md:pb-6">{children}</main>
+      </div>
+      <MobileBottomNav items={navItems} />
     </div>
   );
 }

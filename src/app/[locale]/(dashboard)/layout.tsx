@@ -1,9 +1,21 @@
 import { getTranslations } from "next-intl/server";
-import { Link, redirect } from "@/i18n/navigation";
+import { redirect } from "@/i18n/navigation";
 import { getCurrentProfile, getCurrentTenant } from "@/data/session";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
+import { getOrganization } from "@/data/organizations";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { Sidebar, type SidebarSection } from "@/components/layout/sidebar";
+import {
+  LayoutGrid,
+  Home,
+  Building2,
+  Users,
+  Wrench,
+  FileMinus2,
+  UsersRound,
+  Settings,
+} from "lucide-react";
 
 export default async function DashboardLayout({
   children,
@@ -34,56 +46,63 @@ export default async function DashboardLayout({
   // rôle codé en dur ici. La page /team elle-même redirige indépendamment
   // si atteinte directement sans cette permission (défense en profondeur,
   // pas seulement un masquage côté nav).
-  const permissions = await getCurrentUserPermissions();
+  const [permissions, organization] = await Promise.all([
+    getCurrentUserPermissions(),
+    getOrganization(profile.organization_id),
+  ]);
   const canManageTeam = can(permissions, "users", "create");
   const canViewBuildings = can(permissions, "buildings", "read");
 
+  const sections: SidebarSection[] = [
+    {
+      label: "PARC",
+      items: [
+        { href: "/dashboard", label: t("dashboard"), icon: <LayoutGrid className="size-[18px]" /> },
+        { href: "/properties", label: t("properties"), icon: <Home className="size-[18px]" /> },
+        ...(canViewBuildings
+          ? [{ href: "/buildings", label: t("buildings"), icon: <Building2 className="size-[18px]" /> }]
+          : []),
+        { href: "/tenants", label: t("tenants"), icon: <Users className="size-[18px]" /> },
+      ],
+    },
+    {
+      label: "GESTION",
+      items: [
+        { href: "/maintenance", label: t("maintenance"), icon: <Wrench className="size-[18px]" /> },
+        {
+          href: "/lease-terminations",
+          label: t("leaseTerminations"),
+          icon: <FileMinus2 className="size-[18px]" />,
+        },
+      ],
+    },
+    {
+      label: "ADMINISTRATION",
+      items: [
+        ...(canManageTeam
+          ? [{ href: "/team", label: t("team"), icon: <UsersRound className="size-[18px]" /> }]
+          : []),
+        { href: "/settings", label: t("settings"), icon: <Settings className="size-[18px]" /> },
+      ],
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Une seule barre horizontale, pas de sidebar dédiée : le nombre de
-          liens (2-3 dans cette tranche) ne justifie pas encore un panneau
-          latéral distinct desktop/tiroir mobile — flex-wrap suffit à rester
-          lisible sur petit écran sans composant supplémentaire. */}
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-          <span className="text-sm font-semibold">{tc("appName")}</span>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="hover:underline">
-              {t("dashboard")}
-            </Link>
-            <Link href="/properties" className="hover:underline">
-              {t("properties")}
-            </Link>
-            {canViewBuildings ? (
-              <Link href="/buildings" className="hover:underline">
-                {t("buildings")}
-              </Link>
-            ) : null}
-            <Link href="/maintenance" className="hover:underline">
-              {t("maintenance")}
-            </Link>
-            <Link href="/tenants" className="hover:underline">
-              {t("tenants")}
-            </Link>
-            {canManageTeam ? (
-              <Link href="/team" className="hover:underline">
-                {t("team")}
-              </Link>
-            ) : null}
-            <Link href="/lease-terminations" className="hover:underline">
-              {t("leaseTerminations")}
-            </Link>
-            <Link href="/settings" className="hover:underline">
-              {t("settings")}
-            </Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="flex min-h-screen">
+      <Sidebar
+        appName={tc("appName")}
+        appSubtitle={t("dashboard")}
+        sections={sections}
+        footerName={profile.full_name ?? profile.email}
+        footerSubtitle={organization?.name ?? ""}
+      />
+      <div className="flex min-h-screen flex-1 flex-col">
+        <header className="flex items-center justify-end gap-3 border-b border-border px-4 py-3 sm:px-6">
           <LocaleSwitcher />
           <LogoutButton />
-        </div>
-      </header>
-      <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+        </header>
+        <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+      </div>
     </div>
   );
 }

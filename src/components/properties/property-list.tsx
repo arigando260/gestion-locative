@@ -18,7 +18,7 @@ import type {
 import { getPropertyTypeLabel, type PropertyType } from "@/lib/property-type-labels";
 import { formatPropertyAddress } from "@/lib/format-property-address";
 
-const STATUS_KEY: Record<PropertyStatus, string> = {
+export const PROPERTY_STATUS_KEY: Record<PropertyStatus, string> = {
   disponible: "statusAvailable",
   occupe: "statusOccupied",
   en_travaux: "statusMaintenance",
@@ -85,7 +85,7 @@ export async function PropertyList({
                 <TableCell>{property.price}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">
-                    {t(STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
+                    {t(PROPERTY_STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -101,7 +101,7 @@ export async function PropertyList({
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{property.name}</span>
                   <Badge variant="secondary">
-                    {t(STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
+                    {t(PROPERTY_STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </div>
                 <span className="text-sm text-muted-foreground">

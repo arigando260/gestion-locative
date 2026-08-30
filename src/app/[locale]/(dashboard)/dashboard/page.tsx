@@ -1,18 +1,19 @@
 import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/data/session";
 import { getCurrentUserPermissions } from "@/data/permissions";
 import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
+import { getDashboardStats } from "@/data/dashboard-stats";
+import { getPropertiesWithEffectiveStatus } from "@/data/properties";
+import { PROPERTY_STATUS_KEY } from "@/components/properties/property-list";
 import { formatDate } from "@/lib/format-date";
-import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { formatCompactCurrency } from "@/lib/format-currency";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { AlertRow } from "@/components/dashboard/alert-row";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+type AlertRowProps = React.ComponentProps<typeof AlertRow>;
 
 export default async function DashboardPage({
   params,
@@ -24,192 +25,138 @@ export default async function DashboardPage({
     return null;
   }
 
-  const supabase = await createClient();
-  const [{ data: organization }, permissions] = await Promise.all([
-    supabase
-      .from("organizations")
-      .select("name")
-      .eq("id", profile.organization_id)
-      .single(),
-    getCurrentUserPermissions(),
-  ]);
+  const permissions = await getCurrentUserPermissions();
 
   // Source unique du bloc d'alertes (Module 10) — chaque nouvelle catégorie
   // s'ajoute dans data/dashboard-alerts.ts, jamais en dupliquant un fetch de
-  // plus ici. Cette page ne fait que grouper par "kind" pour l'affichage.
-  const alerts = await getDashboardAlerts(profile.organization_id, permissions);
-  const lowCoverage = alerts.filter(
-    (a): a is Extract<DashboardAlert, { kind: "low_coverage" }> => a.kind === "low_coverage"
-  );
-  const entryInspectionNeeded = alerts.filter(
-    (a): a is Extract<DashboardAlert, { kind: "entry_inspection_needed" }> =>
-      a.kind === "entry_inspection_needed"
-  );
-  const endApproaching = alerts.filter(
-    (a): a is Extract<DashboardAlert, { kind: "lease_end_approaching" }> =>
-      a.kind === "lease_end_approaching"
-  );
-  const closurePending = alerts.filter(
-    (a): a is Extract<DashboardAlert, { kind: "lease_closure_pending" }> =>
-      a.kind === "lease_closure_pending"
-  );
-  const depositRefundPending = alerts.filter(
-    (a): a is Extract<DashboardAlert, { kind: "deposit_refund_pending" }> =>
-      a.kind === "deposit_refund_pending"
-  );
+  // plus ici. Cette page ne fait que mettre en forme ce tableau pour
+  // l'affichage.
+  const [alerts, stats, properties] = await Promise.all([
+    getDashboardAlerts(profile.organization_id, permissions),
+    getDashboardStats(profile.organization_id),
+    getPropertiesWithEffectiveStatus(),
+  ]);
 
-  const t = await getTranslations("nav");
-  const tp = await getTranslations("properties");
-  const td = await getTranslations("dashboard");
-  // Mêmes clés que components/leases/deposit-balance-cards.tsx /
-  // lease-lifecycle-banner.tsx — pas de nouveau libellé par type.
+  const t = await getTranslations("dashboard");
   const tdep = await getTranslations("deposits");
+  const tprop = await getTranslations("properties");
   const DEPOSIT_TYPE_KEY: Record<string, string> = {
     avance_garantie: "typeAvanceGarantie",
     caution_utilities: "typeCautionUtilities",
   };
 
+  const parkByStatus = properties.reduce<Record<string, number>>((acc, p) => {
+    acc[p.effective_status] = (acc[p.effective_status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  function alertToRow(alert: DashboardAlert): AlertRowProps {
+    const name = alert.tenantName ?? alert.propertyName;
+    const base = {
+      name,
+      subtitle: alert.propertyName,
+      actionLabel: t("viewDetails"),
+      actionHref: `/leases/${alert.leaseId}`,
+    };
+
+    switch (alert.kind) {
+      case "low_coverage":
+        return {
+          ...base,
+          badgeLabel: t("badgeCoverage"),
+          badgeVariant: "warning",
+          meta: alert.coverageEndDate
+            ? t("lowCoverageUntil", { date: formatDate(alert.coverageEndDate, locale) })
+            : t("lowCoverageNoSchedule"),
+        };
+      case "entry_inspection_needed":
+        return {
+          ...base,
+          badgeLabel: t("badgeInspection"),
+          badgeVariant: "warning",
+          meta: t("entryInspectionNeeded"),
+        };
+      case "lease_end_approaching":
+        return {
+          ...base,
+          badgeLabel: t("badgeEndApproaching"),
+          badgeVariant: "warning",
+          meta: t("upcomingEndDateUntil", { date: formatDate(alert.endDate, locale) }),
+        };
+      case "lease_closure_pending":
+        return {
+          ...base,
+          badgeLabel: t("badgeClosure"),
+          badgeVariant: alert.subKind === "ready" ? "success" : alert.subKind === "keys_needed" ? "danger" : "warning",
+          meta:
+            alert.subKind === "keys_needed"
+              ? t("closurePendingKeysNeeded")
+              : alert.subKind === "inspection_needed"
+                ? t("closurePendingInspectionNeeded", { date: formatDate(alert.dueDate, locale) })
+                : t("closurePendingReady"),
+        };
+      case "deposit_refund_pending":
+        return {
+          ...base,
+          badgeLabel: t("badgeDeposit"),
+          badgeVariant: "danger",
+          meta: alert.balances
+            .map((b) => `${tdep(DEPOSIT_TYPE_KEY[b.depositType] ?? "typeAvanceGarantie")}: ${b.balance}`)
+            .join(" · "),
+        };
+    }
+  }
+
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      {lowCoverage.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{td("lowCoverageTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {lowCoverage.map((alert) => (
-              <Link
-                key={alert.leaseId}
-                href={`/leases/${alert.leaseId}`}
-                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
-              >
-                <span className="font-medium">
-                  {alert.propertyName} — {alert.tenantName}
-                </span>
-                <span className="text-muted-foreground">
-                  {alert.coverageEndDate
-                    ? td("lowCoverageUntil", { date: formatDate(alert.coverageEndDate, locale) })
-                    : td("lowCoverageNoSchedule")}
-                </span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("greeting", { name: profile.full_name ?? profile.email })}
+        </h1>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">{t("subtitle")}</p>
+      </div>
 
-      {entryInspectionNeeded.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{td("entryInspectionNeededTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {entryInspectionNeeded.map((alert) => (
-              <Link
-                key={alert.leaseId}
-                href={`/leases/${alert.leaseId}`}
-                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
-              >
-                <span className="font-medium">
-                  {alert.propertyName} — {alert.tenantName}
-                </span>
-                <span className="text-muted-foreground">{td("entryInspectionNeeded")}</span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label={t("statProperties")} value={String(stats.propertiesCount)} />
+        <StatTile
+          label={t("statOccupancy")}
+          value={`${stats.occupancyRate} %`}
+          progress={stats.occupancyRate}
+        />
+        <StatTile
+          label={t("statRent")}
+          value={formatCompactCurrency(stats.rentThisMonth, locale)}
+        />
+        <StatTile
+          label={t("statDue")}
+          value={formatCompactCurrency(stats.dueThisMonth, locale)}
+          valueClassName="text-status-danger-fg"
+        />
+      </div>
 
-      {endApproaching.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{td("upcomingEndDateTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {endApproaching.map((alert) => (
-              <Link
-                key={alert.leaseId}
-                href={`/leases/${alert.leaseId}`}
-                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
-              >
-                <span className="font-medium">
-                  {alert.propertyName} — {alert.tenantName}
-                </span>
-                <span className="text-muted-foreground">
-                  {td("upcomingEndDateUntil", { date: formatDate(alert.endDate, locale) })}
-                </span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {Object.keys(parkByStatus).length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(parkByStatus).map(([status, count]) => (
+            <Badge key={status} variant="secondary" className="px-2.5 py-1 text-[12px]">
+              {count}{" "}
+              {tprop(PROPERTY_STATUS_KEY[status as keyof typeof PROPERTY_STATUS_KEY] ?? "statusAvailable")}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
 
-      {closurePending.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{td("closurePendingTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {closurePending.map((alert) => (
-              <Link
-                key={alert.leaseId}
-                href={`/leases/${alert.leaseId}`}
-                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
-              >
-                <span className="font-medium">
-                  {alert.propertyName} — {alert.tenantName}
-                </span>
-                <span className="text-muted-foreground">
-                  {alert.subKind === "keys_needed" && td("closurePendingKeysNeeded")}
-                  {alert.subKind === "inspection_needed" &&
-                    td("closurePendingInspectionNeeded", { date: formatDate(alert.dueDate, locale) })}
-                  {alert.subKind === "ready" && td("closurePendingReady")}
-                </span>
-              </Link>
+      <Card className="p-0">
+        <div className="px-[22px] pt-4 pb-1 text-[15px] font-bold">{t("todoTitle")}</div>
+        {alerts.length === 0 ? (
+          <p className="px-[22px] py-6 text-sm text-muted-foreground">{t("todoEmpty")}</p>
+        ) : (
+          <div className="flex flex-col">
+            {alerts.map((alert, i) => (
+              <AlertRow key={`${alert.kind}-${alert.leaseId}-${i}`} {...alertToRow(alert)} />
             ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {depositRefundPending.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{td("depositRefundPendingTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {depositRefundPending.map((alert) => (
-              <Link
-                key={alert.leaseId}
-                href={`/leases/${alert.leaseId}`}
-                className="flex flex-col gap-0.5 rounded-md border p-3 text-sm hover:bg-muted"
-              >
-                <span className="font-medium">
-                  {alert.propertyName} — {alert.tenantName}
-                </span>
-                {alert.balances.map((b) => (
-                  <span key={b.depositType} className="text-muted-foreground">
-                    {tdep(DEPOSIT_TYPE_KEY[b.depositType] ?? "typeAvanceGarantie")}: {b.balance}
-                  </span>
-                ))}
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{organization?.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <p>{profile.full_name ?? profile.email}</p>
-        </CardContent>
+          </div>
+        )}
       </Card>
-      {/* @base-ui/react utilise "render" (élément à fusionner), pas "asChild"
-          comme Radix — c'est la convention à suivre partout dans ce projet
-          pour rendre un Button/Link polymorphe. */}
-      <Button className="w-fit" render={<Link href="/properties" />} nativeButton={false}>
-        {t("properties")} — {tp("title")}
-      </Button>
     </div>
   );
 }

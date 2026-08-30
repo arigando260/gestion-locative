@@ -16,7 +16,7 @@ import type { LeaseWithContext } from "@/data/leases";
 // de statut pour le locataire, liste et détail confondus. tenant.statusX
 // (formulation différente, ex: "En préparation") reste dans les fichiers
 // de traduction mais n'est plus référencée nulle part.
-const STATUS_KEY: Record<string, string> = {
+export const LEASE_STATUS_KEY: Record<string, string> = {
   brouillon: "statusBrouillon",
   actif: "statusActif",
   termine: "statusTermine",
@@ -39,7 +39,7 @@ export async function TenantLeaseList({
     property: lease.properties?.name ?? "—",
     address: lease.properties?.address_complement ?? "",
     organization: lease.organizations?.name ?? "—",
-    statusLabel: tl(STATUS_KEY[lease.status] ?? "statusBrouillon"),
+    statusLabel: tl(LEASE_STATUS_KEY[lease.status] ?? "statusBrouillon"),
     rent: lease.rent_amount,
   });
 
