@@ -20,29 +20,29 @@ import type {
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
-const STATUS_KEY: Record<MaintenanceTicketStatus, string> = {
+export const TICKET_STATUS_KEY: Record<MaintenanceTicketStatus, string> = {
   signale: "statusSignale",
   en_cours: "statusEnCours",
   resolu: "statusResolu",
   ferme: "statusFerme",
 };
-const STATUS_VARIANT: Record<MaintenanceTicketStatus, BadgeVariant> = {
-  signale: "secondary",
-  en_cours: "default",
-  resolu: "outline",
-  ferme: "ghost",
+export const TICKET_STATUS_VARIANT: Record<MaintenanceTicketStatus, BadgeVariant> = {
+  signale: "warning",
+  en_cours: "secondary",
+  resolu: "success",
+  ferme: "secondary",
 };
-const PRIORITY_KEY: Record<MaintenanceTicketPriority, string> = {
+export const TICKET_PRIORITY_KEY: Record<MaintenanceTicketPriority, string> = {
   basse: "priorityBasse",
   normale: "priorityNormale",
   haute: "priorityHaute",
   urgente: "priorityUrgente",
 };
-const PRIORITY_VARIANT: Record<MaintenanceTicketPriority, BadgeVariant> = {
-  basse: "outline",
+export const TICKET_PRIORITY_VARIANT: Record<MaintenanceTicketPriority, BadgeVariant> = {
+  basse: "secondary",
   normale: "secondary",
-  haute: "default",
-  urgente: "destructive",
+  haute: "warning",
+  urgente: "danger",
 };
 
 export async function TicketList({
@@ -59,10 +59,10 @@ export async function TicketList({
 
   const row = (ticket: MaintenanceTicketWithProperty) => ({
     property: ticket.properties?.name ?? "—",
-    statusLabel: t(STATUS_KEY[ticket.status]),
-    statusVariant: STATUS_VARIANT[ticket.status],
-    priorityLabel: t(PRIORITY_KEY[ticket.priority]),
-    priorityVariant: PRIORITY_VARIANT[ticket.priority],
+    statusLabel: t(TICKET_STATUS_KEY[ticket.status]),
+    statusVariant: TICKET_STATUS_VARIANT[ticket.status],
+    priorityLabel: t(TICKET_PRIORITY_KEY[ticket.priority]),
+    priorityVariant: TICKET_PRIORITY_VARIANT[ticket.priority],
     createdAt: formatDateTime(ticket.created_at, locale),
   });
 

@@ -24,6 +24,12 @@ export const PROPERTY_STATUS_KEY: Record<PropertyStatus, string> = {
   en_travaux: "statusMaintenance",
 };
 
+export const PROPERTY_STATUS_VARIANT: Record<PropertyStatus, "success" | "secondary" | "warning"> = {
+  occupe: "success",
+  disponible: "secondary",
+  en_travaux: "warning",
+};
+
 const EMPTY_ADDRESS: ResolvedPropertyAddress = {
   formatted_address: null,
   country_code: null,
@@ -84,7 +90,7 @@ export async function PropertyList({
                 </TableCell>
                 <TableCell>{property.price}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
+                  <Badge variant={PROPERTY_STATUS_VARIANT[property.effective_status as PropertyStatus] ?? "secondary"}>
                     {t(PROPERTY_STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </TableCell>
@@ -100,7 +106,7 @@ export async function PropertyList({
               <CardContent className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{property.name}</span>
-                  <Badge variant="secondary">
+                  <Badge variant={PROPERTY_STATUS_VARIANT[property.effective_status as PropertyStatus] ?? "secondary"}>
                     {t(PROPERTY_STATUS_KEY[property.effective_status as PropertyStatus] ?? "status")}
                   </Badge>
                 </div>

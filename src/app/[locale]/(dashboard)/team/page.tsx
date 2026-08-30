@@ -5,6 +5,8 @@ import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { getOrgStaff, getStaffInvitations } from "@/data/staff-invitations";
 import { InviteStaffForm } from "@/components/team/invite-staff-form";
 import { formatDateTime } from "@/lib/format-date";
+import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -58,60 +60,66 @@ export default async function TeamPage({
 
       <InviteStaffForm />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("pendingTitle")}</CardTitle>
+      <Card className="p-0">
+        <CardHeader className="px-[22px] pt-4 pb-1">
+          <CardTitle className="text-[15px] font-bold">{t("pendingTitle")}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {pendingInvitations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("pendingEmpty")}</p>
+            <p className="px-[22px] py-4 text-sm text-muted-foreground">{t("pendingEmpty")}</p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <div className="flex flex-col">
               {pendingInvitations.map((invitation) => (
-                <li
+                <div
                   key={invitation.id}
-                  className="flex flex-col gap-0.5 border-b border-border pb-2 text-sm last:border-0 last:pb-0"
+                  className="flex items-center gap-3 border-t border-[#f2f2f4] px-[22px] py-[13px] first:border-t-0 hover:bg-[#fafafa]"
                 >
-                  <span>
-                    {invitation.email} — {t(`role${capitalize(invitation.role_code)}`)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {t("invitedOn", {
-                      date: formatDateTime(invitation.created_at, dataLocale),
-                    })}
-                    {" — "}
-                    {t("expiresOn", {
-                      date: formatDateTime(invitation.expires_at, dataLocale),
-                    })}
-                  </span>
-                </li>
+                  <AvatarInitials name={invitation.email} tone="system" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-semibold">{invitation.email}</div>
+                    <div className="truncate text-[12px] text-muted-foreground">
+                      {t("invitedOn", { date: formatDateTime(invitation.created_at, dataLocale) })}
+                      {" — "}
+                      {t("expiresOn", { date: formatDateTime(invitation.expires_at, dataLocale) })}
+                    </div>
+                  </div>
+                  <Badge variant="secondary">{t(`role${capitalize(invitation.role_code)}`)}</Badge>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("membersTitle")}</CardTitle>
+      <Card className="p-0">
+        <CardHeader className="px-[22px] pt-4 pb-1">
+          <CardTitle className="text-[15px] font-bold">{t("membersTitle")}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {staff.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("membersEmpty")}</p>
+            <p className="px-[22px] py-4 text-sm text-muted-foreground">{t("membersEmpty")}</p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <div className="flex flex-col">
               {staff.map((member) => (
-                <li
+                <div
                   key={member.id}
-                  className="flex items-center justify-between border-b border-border pb-2 text-sm last:border-0 last:pb-0"
+                  className="flex items-center gap-3 border-t border-[#f2f2f4] px-[22px] py-[13px] first:border-t-0 hover:bg-[#fafafa]"
                 >
-                  <span>{member.full_name || member.email}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {member.role_code ? t(`role${capitalize(member.role_code)}`) : "—"}
-                  </span>
-                </li>
+                  <AvatarInitials name={member.full_name || member.email} tone="system" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-semibold">
+                      {member.full_name || member.email}
+                    </div>
+                    {member.full_name ? (
+                      <div className="truncate text-[12px] text-muted-foreground">{member.email}</div>
+                    ) : null}
+                  </div>
+                  {member.role_code ? (
+                    <Badge variant="secondary">{t(`role${capitalize(member.role_code)}`)}</Badge>
+                  ) : null}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>

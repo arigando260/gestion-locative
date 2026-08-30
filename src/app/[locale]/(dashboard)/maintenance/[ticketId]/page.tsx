@@ -12,22 +12,14 @@ import { formatDateTime } from "@/lib/format-date";
 import { TicketStatusControl } from "@/components/maintenance/ticket-status-control";
 import { TicketCostFields } from "@/components/maintenance/ticket-cost-fields";
 import { TicketPhotoGallery } from "@/components/maintenance/ticket-photo-gallery";
+import {
+  TICKET_STATUS_KEY,
+  TICKET_STATUS_VARIANT,
+  TICKET_PRIORITY_KEY,
+  TICKET_PRIORITY_VARIANT,
+} from "@/components/maintenance/ticket-list";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { MaintenanceTicketPriority, MaintenanceTicketStatus } from "@/data/maintenance";
-
-const STATUS_KEY: Record<MaintenanceTicketStatus, string> = {
-  signale: "statusSignale",
-  en_cours: "statusEnCours",
-  resolu: "statusResolu",
-  ferme: "statusFerme",
-};
-const PRIORITY_KEY: Record<MaintenanceTicketPriority, string> = {
-  basse: "priorityBasse",
-  normale: "priorityNormale",
-  haute: "priorityHaute",
-  urgente: "priorityUrgente",
-};
 
 export default async function MaintenanceTicketPage({
   params,
@@ -66,8 +58,12 @@ export default async function MaintenanceTicketPage({
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>{ticket.title}</CardTitle>
           <div className="flex gap-2">
-            <Badge variant="secondary">{t(PRIORITY_KEY[ticket.priority])}</Badge>
-            <Badge>{t(STATUS_KEY[ticket.status])}</Badge>
+            <Badge variant={TICKET_PRIORITY_VARIANT[ticket.priority]}>
+              {t(TICKET_PRIORITY_KEY[ticket.priority])}
+            </Badge>
+            <Badge variant={TICKET_STATUS_VARIANT[ticket.status]}>
+              {t(TICKET_STATUS_KEY[ticket.status])}
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">

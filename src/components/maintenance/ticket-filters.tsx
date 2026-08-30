@@ -8,7 +8,8 @@ import type { MaintenanceTicketFilters } from "@/data/maintenance";
 // recherche, lus côté page (app/[locale]/(dashboard)/maintenance/page.tsx).
 // Pas de `action` explicite : soumis vers l'URL courante, locale comprise.
 const SELECT_CLASS =
-  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-[13px] font-medium outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
+const LABEL_CLASS = "text-[11px] font-semibold tracking-wide text-muted-foreground uppercase";
 
 export async function TicketFilters({
   filters,
@@ -22,7 +23,7 @@ export async function TicketFilters({
   return (
     <form className="flex flex-wrap items-end gap-3">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="status" className="text-sm font-medium">
+        <label htmlFor="status" className={LABEL_CLASS}>
           {t("filterStatus")}
         </label>
         <select
@@ -39,7 +40,7 @@ export async function TicketFilters({
         </select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="priority" className="text-sm font-medium">
+        <label htmlFor="priority" className={LABEL_CLASS}>
           {t("filterPriority")}
         </label>
         <select
@@ -56,7 +57,7 @@ export async function TicketFilters({
         </select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="property_id" className="text-sm font-medium">
+        <label htmlFor="property_id" className={LABEL_CLASS}>
           {t("filterProperty")}
         </label>
         <select
@@ -75,7 +76,7 @@ export async function TicketFilters({
       </div>
       <button
         type="submit"
-        className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm font-medium hover:bg-muted"
+        className="h-8 rounded-lg border border-input bg-card px-3 text-[13px] font-semibold hover:bg-muted"
       >
         {t("applyFilters")}
       </button>
