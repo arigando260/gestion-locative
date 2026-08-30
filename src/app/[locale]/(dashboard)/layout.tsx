@@ -39,6 +39,7 @@ export default async function DashboardLayout({
 
   const t = await getTranslations("nav");
   const tc = await getTranslations("common");
+  const td = await getTranslations("dashboard");
   // Premier lien de nav conditionné dans ce projet -- réutilise
   // getCurrentUserPermissions()/can() (data/permissions.ts, déjà utilisée
   // par toutes les autres pages du dashboard, lit la vue my_permissions) :
@@ -52,6 +53,10 @@ export default async function DashboardLayout({
   ]);
   const canManageTeam = can(permissions, "users", "create");
   const canViewBuildings = can(permissions, "buildings", "read");
+  // "Espace propriétaire" (maquette) : même tableau de bord staff, habillage
+  // seul selon organizations.organization_type (Module 12j/12k, purement
+  // cosmétique jusqu'ici) -- aucune nouvelle table/RLS, voir le plan.
+  const isOwnerOrg = organization?.organization_type === "proprietaire";
 
   const sections: SidebarSection[] = [
     {
@@ -91,7 +96,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen">
       <Sidebar
         appName={tc("appName")}
-        appSubtitle={t("dashboard")}
+        appSubtitle={isOwnerOrg ? td("ownerTagline") : t("dashboard")}
         sections={sections}
         footerName={profile.full_name ?? profile.email}
         footerSubtitle={organization?.name ?? ""}

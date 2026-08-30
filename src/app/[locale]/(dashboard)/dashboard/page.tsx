@@ -5,6 +5,7 @@ import { getCurrentUserPermissions } from "@/data/permissions";
 import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
 import { getDashboardStats } from "@/data/dashboard-stats";
 import { getPropertiesWithEffectiveStatus } from "@/data/properties";
+import { getOrganization } from "@/data/organizations";
 import { PROPERTY_STATUS_KEY } from "@/components/properties/property-list";
 import { formatDate } from "@/lib/format-date";
 import { formatCompactCurrency } from "@/lib/format-currency";
@@ -46,11 +47,16 @@ export default async function DashboardPage({
   // s'ajoute dans data/dashboard-alerts.ts, jamais en dupliquant un fetch de
   // plus ici. Cette page ne fait que mettre en forme ce tableau pour
   // l'affichage.
-  const [alerts, stats, properties] = await Promise.all([
+  const [alerts, stats, properties, organization] = await Promise.all([
     getDashboardAlerts(profile.organization_id, permissions),
     getDashboardStats(profile.organization_id),
     getPropertiesWithEffectiveStatus(),
+    getOrganization(profile.organization_id),
   ]);
+  // "Espace propriétaire" (maquette) : même vue, seule l'accroche change
+  // selon organization_type -- voir (dashboard)/layout.tsx pour la même
+  // logique côté tagline sidebar.
+  const isOwnerOrg = organization?.organization_type === "proprietaire";
 
   const t = await getTranslations("dashboard");
   const tdep = await getTranslations("deposits");
@@ -128,7 +134,9 @@ export default async function DashboardPage({
         <h1 className="text-2xl font-bold tracking-tight">
           {t("greeting", { name: profile.full_name ?? profile.email })}
         </h1>
-        <p className="mt-1 text-[13.5px] text-muted-foreground">{t("subtitle")}</p>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
+          {isOwnerOrg ? t("ownerSubtitle") : t("subtitle")}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
