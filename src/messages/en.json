@@ -665,7 +665,14 @@
     "badgeEndApproaching": "Ending soon",
     "badgeClosure": "Closure",
     "badgeInspection": "Inspection",
-    "badgeDeposit": "Deposit"
+    "badgeDeposit": "Deposit",
+    "agentSubtitle": "{count, plural, =0 {No tasks today} one {# task today} other {# tasks today}}",
+    "agentAllClearTitle": "All caught up",
+    "agentAllClearBody": "Nothing to do today.",
+    "kindEtatDesLieux": "Inspection",
+    "kindRelance": "Follow-up",
+    "kindIntervention": "Maintenance",
+    "startInspection": "Start"
   },
   "billing": {
     "invoicesTitle": "Invoices",

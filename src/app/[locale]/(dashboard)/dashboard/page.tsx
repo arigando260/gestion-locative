@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentProfile } from "@/data/session";
+import { getCurrentProfile, getCurrentStaffRole } from "@/data/session";
 import { getCurrentUserPermissions } from "@/data/permissions";
 import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
 import { getDashboardStats } from "@/data/dashboard-stats";
@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/format-date";
 import { formatCompactCurrency } from "@/lib/format-currency";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { AlertRow } from "@/components/dashboard/alert-row";
+import { AgentTodayView } from "@/components/dashboard/agent-today-view";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -23,6 +24,20 @@ export default async function DashboardPage({
   if (!profile) {
     redirect({ href: "/login", locale });
     return null;
+  }
+
+  // Écran dédié pour l'agent terrain (Espace agent, "Aujourd'hui") — admin/
+  // comptable gardent le tableau de bord ci-dessous inchangé. Sidebar/layout
+  // non affectés, seul ce contenu bascule.
+  const role = await getCurrentStaffRole();
+  if (role === "agent") {
+    return (
+      <AgentTodayView
+        organizationId={profile.organization_id}
+        profileName={profile.full_name ?? profile.email}
+        locale={locale}
+      />
+    );
   }
 
   const permissions = await getCurrentUserPermissions();

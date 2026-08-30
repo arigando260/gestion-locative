@@ -665,7 +665,14 @@
     "badgeEndApproaching": "Échéance proche",
     "badgeClosure": "Clôture",
     "badgeInspection": "État des lieux",
-    "badgeDeposit": "Caution"
+    "badgeDeposit": "Caution",
+    "agentSubtitle": "{count, plural, =0 {Aucune tâche aujourd'hui} one {# tâche aujourd'hui} other {# tâches aujourd'hui}}",
+    "agentAllClearTitle": "Tout est à jour",
+    "agentAllClearBody": "Aucune tâche pour aujourd'hui.",
+    "kindEtatDesLieux": "État des lieux",
+    "kindRelance": "Relance",
+    "kindIntervention": "Intervention",
+    "startInspection": "Commencer"
   },
   "billing": {
     "invoicesTitle": "Factures",

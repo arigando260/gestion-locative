@@ -97,6 +97,56 @@ export async function getLeaseScheduleCoverage(
 // elles (coverage_end_date < lease_end_date) dans un filtre .or(), seul un
 // littéral est possible côté requête — même limite déjà contournée ainsi
 // sur la fiche bail.
+export type OverdueLease = {
+  lease_id: string;
+  property_name: string;
+  tenant_full_name: string | null;
+  due_date: string;
+  amount_due: number;
+};
+
+// Une ligne par bail (la plus ancienne échéance en retard), pas une par
+// échéance -- source pour l'accueil agent (tâches "Relance"). Même lecture
+// que getLeasesWithLowScheduleCoverage ci-dessous (vue effective_status,
+// jamais la colonne brute), mais pas de vue dédiée "leases en retard" :
+// jointure directe payment_schedules_effective_status -> leases ->
+// properties/tenant_accounts plutôt qu'une nouvelle vue SQL pour un seul
+// écran.
+export async function getLeasesWithOverduePayments(
+  organizationId: string
+): Promise<OverdueLease[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_schedules_effective_status")
+    .select(
+      "lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name))"
+    )
+    .eq("organization_id", organizationId)
+    .eq("effective_status", "en_retard")
+    .order("due_date", { ascending: true });
+
+  if (error) throw error;
+
+  const byLease = new Map<string, OverdueLease>();
+  for (const row of data ?? []) {
+    if (!row.lease_id || !row.due_date || row.amount_due == null) continue;
+    if (byLease.has(row.lease_id)) continue;
+    const lease = row.leases as unknown as {
+      properties: { name: string } | null;
+      tenant_accounts: { full_name: string | null } | null;
+    } | null;
+    byLease.set(row.lease_id, {
+      lease_id: row.lease_id,
+      property_name: lease?.properties?.name ?? "—",
+      tenant_full_name: lease?.tenant_accounts?.full_name ?? null,
+      due_date: row.due_date,
+      amount_due: row.amount_due,
+    });
+  }
+
+  return Array.from(byLease.values());
+}
+
 export async function getLeasesWithLowScheduleCoverage(
   organizationId: string
 ): Promise<LeaseScheduleCoverage[]> {
