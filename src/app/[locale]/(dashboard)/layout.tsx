@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentProfile, getCurrentTenant } from "@/data/session";
+import { getCurrentProfile, getCurrentTenant, getCurrentStaffRole } from "@/data/session";
 import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { getOrganization } from "@/data/organizations";
+import { getUpcomingDeadlinesCount } from "@/data/upcoming-deadlines";
+import { getMonthRentSchedules, summarizeMonthRentSchedules } from "@/data/rent-collection";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { Sidebar, type SidebarSection } from "@/components/layout/sidebar";
@@ -13,6 +15,8 @@ import {
   Users,
   Wrench,
   FileMinus2,
+  CalendarClock,
+  Banknote,
   UsersRound,
   Settings,
 } from "lucide-react";
@@ -47,10 +51,21 @@ export default async function DashboardLayout({
   // rôle codé en dur ici. La page /team elle-même redirige indépendamment
   // si atteinte directement sans cette permission (défense en profondeur,
   // pas seulement un masquage côté nav).
-  const [permissions, organization] = await Promise.all([
+  const role = await getCurrentStaffRole();
+  // Badges "Échéances"/"Loyers & paiements" masqués pour l'agent (même
+  // périmètre que les pages elles-mêmes, qui redirigent l'agent) -- inutile
+  // de lancer les requêtes sous-jacentes pour un badge qui ne s'affichera
+  // jamais. getMonthRentSchedules est la même fonction groupée que celle
+  // utilisée par /dashboard/loyers (data/rent-collection.ts) -- une seule
+  // requête, pas une par badge.
+  const [permissions, organization, upcomingDeadlinesCount, monthRentSchedules] = await Promise.all([
     getCurrentUserPermissions(),
     getOrganization(profile.organization_id),
+    role === "agent" ? Promise.resolve(0) : getUpcomingDeadlinesCount(profile.organization_id),
+    role === "agent" ? Promise.resolve([]) : getMonthRentSchedules(profile.organization_id),
   ]);
+  const rentsSummary = summarizeMonthRentSchedules(monthRentSchedules);
+  const rentsBadgeCount = rentsSummary.overdueCount + rentsSummary.partialCount;
   const canManageTeam = can(permissions, "users", "create");
   const canViewBuildings = can(permissions, "buildings", "read");
   // "Espace propriétaire" (maquette) : même tableau de bord staff, habillage
@@ -73,12 +88,32 @@ export default async function DashboardLayout({
     {
       label: "GESTION",
       items: [
+        ...(role !== "agent"
+          ? [
+              {
+                href: "/dashboard/loyers",
+                label: t("rents"),
+                icon: <Banknote className="size-[18px]" />,
+                badgeCount: rentsBadgeCount,
+              },
+            ]
+          : []),
         { href: "/maintenance", label: t("maintenance"), icon: <Wrench className="size-[18px]" /> },
         {
           href: "/lease-terminations",
           label: t("leaseTerminations"),
           icon: <FileMinus2 className="size-[18px]" />,
         },
+        ...(role !== "agent"
+          ? [
+              {
+                href: "/dashboard/echeances",
+                label: t("deadlines"),
+                icon: <CalendarClock className="size-[18px]" />,
+                badgeCount: upcomingDeadlinesCount,
+              },
+            ]
+          : []),
       ],
     },
     {

@@ -2,16 +2,24 @@ import { getTranslations } from "next-intl/server";
 import { redirect, Link } from "@/i18n/navigation";
 import { getCurrentProfile, getCurrentStaffRole } from "@/data/session";
 import { getCurrentUserPermissions } from "@/data/permissions";
-import { getDashboardAlerts, type DashboardAlert } from "@/data/dashboard-alerts";
+import { getDashboardAlerts } from "@/data/dashboard-alerts";
 import { getDashboardStats } from "@/data/dashboard-stats";
 import { getPropertiesWithEffectiveStatus } from "@/data/properties";
 import { getOrganization } from "@/data/organizations";
-import { getClosurePendingPropertyIds, resolvePropertyParkStatus } from "@/data/lease-closure";
-import { formatDate, daysSince } from "@/lib/format-date";
+import {
+  getClosurePendingPropertyIds,
+  resolvePropertyParkStatus,
+  getLeasesWithUpcomingEndDate,
+} from "@/data/lease-closure";
+import { getLeasesWithPendingDepositRefund } from "@/data/deposits";
+import { getUpcomingScheduleCountThisWeek } from "@/data/schedules";
+import { getRecentActivity, type RecentActivityEvent } from "@/data/dashboard-activity";
+import { formatDateTime, daysSince } from "@/lib/format-date";
 import { formatCompactCurrency } from "@/lib/format-currency";
 import { cn } from "@/lib/utils";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { AlertRow } from "@/components/dashboard/alert-row";
+import { alertToRowProps, sortAlertsBySeverity } from "@/components/dashboard/alert-mapping";
 import { AgentTodayView } from "@/components/dashboard/agent-today-view";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +40,6 @@ const PARK_DOT_CLASS: Record<(typeof PARK_ORDER)[number], string> = {
   en_preparation_sortie: "bg-status-warning-fg",
   en_travaux: "bg-[#a1a1aa]",
 };
-
-type AlertRowProps = React.ComponentProps<typeof AlertRow>;
 
 export default async function DashboardPage({
   params,
@@ -65,12 +71,26 @@ export default async function DashboardPage({
   // s'ajoute dans data/dashboard-alerts.ts, jamais en dupliquant un fetch de
   // plus ici. Cette page ne fait que mettre en forme ce tableau pour
   // l'affichage.
-  const [alerts, stats, properties, organization, closurePropertyIds] = await Promise.all([
+  const [
+    alerts,
+    stats,
+    properties,
+    organization,
+    closurePropertyIds,
+    upcomingEndLeases,
+    upcomingRentCount,
+    pendingDepositRefunds,
+    recentActivity,
+  ] = await Promise.all([
     getDashboardAlerts(profile.organization_id, permissions),
     getDashboardStats(profile.organization_id),
     getPropertiesWithEffectiveStatus(),
     getOrganization(profile.organization_id),
     getClosurePendingPropertyIds(profile.organization_id),
+    getLeasesWithUpcomingEndDate(profile.organization_id),
+    getUpcomingScheduleCountThisWeek(profile.organization_id),
+    getLeasesWithPendingDepositRefund(profile.organization_id),
+    getRecentActivity(profile.organization_id),
   ]);
   // "Espace propriétaire" (maquette) : même vue, seule l'accroche change
   // selon organization_type -- voir (dashboard)/layout.tsx pour la même
@@ -80,10 +100,13 @@ export default async function DashboardPage({
 
   const t = await getTranslations("dashboard");
   const tdep = await getTranslations("deposits");
-  const DEPOSIT_TYPE_KEY: Record<string, string> = {
-    avance_garantie: "typeAvanceGarantie",
-    caution_utilities: "typeCautionUtilities",
-  };
+
+  // Tri par sévérité (alertSeverity, components/dashboard/alert-mapping.ts
+  // -- même source que la couleur des badges, jamais un second classement)
+  // : la carte tronque aux 5 plus urgentes, /dashboard/alertes affiche la
+  // liste complète triée pareil.
+  const sortedAlerts = sortAlertsBySeverity(alerts);
+  const visibleAlerts = sortedAlerts.slice(0, 5);
 
   // resolvePropertyParkStatus (data/lease-closure.ts) est la même fonction
   // utilisée par le filtre de /properties -- une seule définition de "en
@@ -94,62 +117,55 @@ export default async function DashboardPage({
     return acc;
   }, {});
 
-  function alertToRow(alert: DashboardAlert): AlertRowProps {
-    const name = alert.tenantName ?? alert.propertyName;
-    const base = {
-      name,
-      subtitle: alert.propertyName,
-      actionLabel: t("viewDetails"),
-      actionHref: `/leases/${alert.leaseId}`,
-    };
 
-    switch (alert.kind) {
-      case "low_coverage":
-        return {
-          ...base,
-          badgeLabel: t("badgeCoverage"),
-          badgeVariant: "warning",
-          meta: alert.coverageEndDate
-            ? t("lowCoverageUntil", { date: formatDate(alert.coverageEndDate, locale) })
-            : t("lowCoverageNoSchedule"),
-        };
-      case "entry_inspection_needed":
-        return {
-          ...base,
-          badgeLabel: t("badgeInspection"),
-          badgeVariant: "warning",
-          meta: t("entryInspectionNeeded"),
-        };
-      case "lease_end_approaching":
-        return {
-          ...base,
-          badgeLabel: t("badgeEndApproaching"),
-          badgeVariant: "warning",
-          meta: t("upcomingEndDateUntil", { date: formatDate(alert.endDate, locale) }),
-        };
-      case "lease_closure_pending":
-        return {
-          ...base,
-          badgeLabel: t("badgeClosure"),
-          badgeVariant: alert.subKind === "ready" ? "success" : alert.subKind === "keys_needed" ? "danger" : "warning",
-          meta:
-            alert.subKind === "keys_needed"
-              ? t("closurePendingKeysNeeded")
-              : alert.subKind === "inspection_needed"
-                ? t("closurePendingInspectionNeeded", { date: formatDate(alert.dueDate, locale) })
-                : t("closurePendingReady"),
-        };
-      case "deposit_refund_pending":
-        return {
-          ...base,
-          badgeLabel: t("badgeDeposit"),
-          badgeVariant: "danger",
-          meta: alert.balances
-            .map((b) => `${tdep(DEPOSIT_TYPE_KEY[b.depositType] ?? "typeAvanceGarantie")}: ${b.balance}`)
-            .join(" · "),
-        };
+  function activityEventLabel(event: RecentActivityEvent): string {
+    switch (event.kind) {
+      case "payment_received":
+        return t("activityPaymentReceived", { name: event.tenantName ?? event.propertyName });
+      case "issue_reported":
+        return event.reportedByTenant
+          ? t("activityIssueReportedTenant", { property: event.propertyName })
+          : t("activityIssueReportedStaff", { property: event.propertyName });
+      case "lease_signed":
+        return t("activityLeaseSigned", { name: event.tenantName ?? event.propertyName });
+      case "notice_filed":
+        return t("activityNoticeFiled", { name: event.tenantName ?? event.propertyName });
     }
   }
+
+  // Couleur de puce volontaire par catégorie, pas un warning générique
+  // dupliqué trois fois -- ne pas "harmoniser" par erreur plus tard :
+  // - baux à échéance / garanties à restituer : orange, une action est à
+  //   prévoir par nature (renouveler/clôturer, rembourser), qu'il y ait
+  //   urgence immédiate ou non.
+  // - loyers dus cette semaine : gris, simple information -- ce n'est un
+  //   problème que si l'échéance passe en retard, déjà couvert séparément
+  //   par la catégorie "loyer en retard" de "À traiter aujourd'hui"
+  //   (badge rouge, sévérité 0). Ne pas dupliquer ce signal ici.
+  // groupKey correspond aux id des cartes de /dashboard/echeances (même
+  // clé "leaseEnd"/"rentDue"/"depositRefund" que les groupes de cette
+  // page) -- chaque ligne renvoie vers son ancre précise, pas le haut de
+  // la page.
+  const upcomingItems = [
+    {
+      groupKey: "leaseEnd",
+      count: upcomingEndLeases.length,
+      label: t("upcomingLeaseEnd", { count: upcomingEndLeases.length }),
+      dotClass: "bg-status-warning-fg",
+    },
+    {
+      groupKey: "rentDue",
+      count: upcomingRentCount,
+      label: t("upcomingRentDue", { count: upcomingRentCount }),
+      dotClass: "bg-[#a1a1aa]",
+    },
+    {
+      groupKey: "depositRefund",
+      count: pendingDepositRefunds.length,
+      label: t("upcomingDepositRefund", { count: pendingDepositRefunds.length }),
+      dotClass: "bg-status-warning-fg",
+    },
+  ].filter((item) => item.count > 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -215,18 +231,87 @@ export default async function DashboardPage({
         </Card>
       ) : null}
 
-      <Card className="p-0">
-        <div className="px-[22px] pt-4 pb-1 text-[15px] font-bold">{t("todoTitle")}</div>
-        {alerts.length === 0 ? (
-          <p className="px-[22px] py-6 text-sm text-muted-foreground">{t("todoEmpty")}</p>
-        ) : (
-          <div className="flex flex-col">
-            {alerts.map((alert, i) => (
-              <AlertRow key={`${alert.kind}-${alert.leaseId}-${i}`} {...alertToRow(alert)} />
-            ))}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
+        <Card className="p-0">
+          <div className="flex items-center justify-between px-[22px] pt-4 pb-1">
+            <div className="flex items-center gap-2">
+              <span className="size-[7px] shrink-0 rounded-full bg-status-danger-fg" />
+              <span className="text-[15px] font-bold">{t("todoTitle")}</span>
+            </div>
+            {alerts.length > 0 ? (
+              <Link
+                href="/dashboard/alertes"
+                className="text-[12.5px] font-medium text-primary hover:text-primary/80 hover:underline"
+              >
+                {t("todoViewAll", { count: alerts.length })}
+              </Link>
+            ) : null}
           </div>
-        )}
-      </Card>
+          {alerts.length === 0 ? (
+            <p className="px-[22px] py-6 text-sm text-muted-foreground">{t("todoEmpty")}</p>
+          ) : (
+            <div className="flex flex-col">
+              {visibleAlerts.map((alert, i) => (
+                <AlertRow
+                  key={`${alert.kind}-${alert.leaseId}-${i}`}
+                  {...alertToRowProps(alert, { t, tdep, locale })}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <div className="flex flex-col gap-4">
+          <Card className="p-0">
+            <div className="flex items-center justify-between px-[18px] pt-4 pb-1">
+              <span className="text-[13px] font-bold">{t("upcomingTitle")}</span>
+              {upcomingItems.length > 0 ? (
+                <Link
+                  href="/dashboard/echeances"
+                  className="text-[12px] font-medium text-primary hover:text-primary/80 hover:underline"
+                >
+                  {t("upcomingViewAll")}
+                </Link>
+              ) : null}
+            </div>
+            {upcomingItems.length === 0 ? (
+              <p className="px-[18px] py-4 text-[13px] text-muted-foreground">{t("upcomingEmpty")}</p>
+            ) : (
+              <div className="flex flex-col">
+                {upcomingItems.map((item, i) => (
+                  <Link
+                    key={i}
+                    href={`/dashboard/echeances#${item.groupKey}`}
+                    className="flex items-center gap-2 border-t border-[#f2f2f4] px-[18px] py-3 text-[13px] first:border-t-0 hover:bg-[#fafafa]"
+                  >
+                    <span className="font-bold tabular-nums">{item.count}</span>
+                    <span className="flex-1 text-muted-foreground">{item.label}</span>
+                    <span className={cn("size-[7px] shrink-0 rounded-full", item.dotClass)} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="gap-2 p-0">
+            <div className="px-[18px] pt-4 pb-1 text-[13px] font-bold">{t("recentActivityTitle")}</div>
+            {recentActivity.length === 0 ? (
+              <p className="px-[18px] py-4 text-[13px] text-muted-foreground">{t("activityEmpty")}</p>
+            ) : (
+              <div className="flex flex-col gap-3 px-[18px] pb-4">
+                {recentActivity.map((event, i) => (
+                  <div key={i} className="flex items-baseline justify-between gap-3 text-[12.5px]">
+                    <span className="text-foreground">{activityEventLabel(event)}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {formatDateTime(event.at, locale)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

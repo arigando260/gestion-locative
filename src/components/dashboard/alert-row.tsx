@@ -50,7 +50,17 @@ export function AlertRow({
       >
         {badgeLabel}
       </Badge>
-      <Button variant="outline" size="sm" render={<Link href={actionHref} />} nativeButton={false}>
+      <Button
+        variant="outline"
+        size="sm"
+        // tel:/mailto: (ex. "Relancer" -> appel direct) doivent passer par
+        // une ancre native -- le Link i18n préfixerait la locale devant le
+        // schéma et casserait l'URL (/fr/tel:...).
+        render={
+          /^[a-z]+:/.test(actionHref) ? <a href={actionHref} /> : <Link href={actionHref} />
+        }
+        nativeButton={false}
+      >
         {actionLabel}
       </Button>
     </div>

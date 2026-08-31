@@ -101,13 +101,16 @@ export type OverdueLease = {
   lease_id: string;
   property_name: string;
   tenant_full_name: string | null;
+  tenant_phone: string | null;
   due_date: string;
   amount_due: number;
 };
 
 // Une ligne par bail (la plus ancienne échéance en retard), pas une par
-// échéance -- source pour l'accueil agent (tâches "Relance"). Même lecture
-// que getLeasesWithLowScheduleCoverage ci-dessous (vue effective_status,
+// échéance -- source pour l'accueil agent (tâches "Relance") ET pour la
+// catégorie "loyer en retard" du tableau de bord admin (bouton "Relancer",
+// lien tel: -- d'où tenant_phone, absent jusqu'ici). Même lecture que
+// getLeasesWithLowScheduleCoverage ci-dessous (vue effective_status,
 // jamais la colonne brute), mais pas de vue dédiée "leases en retard" :
 // jointure directe payment_schedules_effective_status -> leases ->
 // properties/tenant_accounts plutôt qu'une nouvelle vue SQL pour un seul
@@ -119,7 +122,7 @@ export async function getLeasesWithOverduePayments(
   const { data, error } = await supabase
     .from("payment_schedules_effective_status")
     .select(
-      "lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name))"
+      "lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name, phone))"
     )
     .eq("organization_id", organizationId)
     .eq("effective_status", "en_retard")
@@ -133,12 +136,13 @@ export async function getLeasesWithOverduePayments(
     if (byLease.has(row.lease_id)) continue;
     const lease = row.leases as unknown as {
       properties: { name: string } | null;
-      tenant_accounts: { full_name: string | null } | null;
+      tenant_accounts: { full_name: string | null; phone: string | null } | null;
     } | null;
     byLease.set(row.lease_id, {
       lease_id: row.lease_id,
       property_name: lease?.properties?.name ?? "—",
       tenant_full_name: lease?.tenant_accounts?.full_name ?? null,
+      tenant_phone: lease?.tenant_accounts?.phone ?? null,
       due_date: row.due_date,
       amount_due: row.amount_due,
     });
@@ -146,6 +150,70 @@ export async function getLeasesWithOverduePayments(
 
   return Array.from(byLease.values());
 }
+
+function upcomingDaysRange(days: number): { start: string; end: string } {
+  const now = new Date();
+  const start = now.toISOString().slice(0, 10);
+  const end = new Date(now.getTime() + days * 86_400_000).toISOString().slice(0, 10);
+  return { start, end };
+}
+
+export type UpcomingSchedule = {
+  lease_id: string;
+  property_name: string;
+  tenant_full_name: string | null;
+  due_date: string;
+  amount_due: number;
+};
+
+// Échéances dont la date tombe dans les `days` prochains jours (7 par
+// défaut), statut en_attente uniquement (pas encore due, distinct de
+// en_retard déjà utilisé ailleurs dans ce fichier) -- source pour le
+// compteur "À venir" (toujours à 7j, cf. wrapper ci-dessous) ET la liste
+// détaillée de /dashboard/echeances (fenêtre choisie par le filtre temporel
+// de cet écran), jamais deux calculs séparés (même principe que
+// resolvePropertyParkStatus/alertSeverity).
+export async function getSchedulesDueThisWeek(
+  organizationId: string,
+  days = 7
+): Promise<UpcomingSchedule[]> {
+  const supabase = await createClient();
+  const { start, end } = upcomingDaysRange(days);
+  const { data, error } = await supabase
+    .from("payment_schedules_effective_status")
+    .select("lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name))")
+    .eq("organization_id", organizationId)
+    .eq("effective_status", "en_attente")
+    .gte("due_date", start)
+    .lte("due_date", end)
+    .order("due_date", { ascending: true });
+
+  if (error) throw error;
+
+  const rows: UpcomingSchedule[] = [];
+  for (const row of data ?? []) {
+    if (!row.lease_id || !row.due_date || row.amount_due == null) continue;
+    const lease = row.leases as unknown as {
+      properties: { name: string } | null;
+      tenant_accounts: { full_name: string | null } | null;
+    } | null;
+    rows.push({
+      lease_id: row.lease_id,
+      property_name: lease?.properties?.name ?? "—",
+      tenant_full_name: lease?.tenant_accounts?.full_name ?? null,
+      due_date: row.due_date,
+      amount_due: row.amount_due,
+    });
+  }
+  return rows;
+}
+
+// Compteur "À venir" du tableau de bord -- simple wrapper de
+// getSchedulesDueThisWeek ci-dessus.
+export async function getUpcomingScheduleCountThisWeek(organizationId: string): Promise<number> {
+  return (await getSchedulesDueThisWeek(organizationId)).length;
+}
+
 
 export async function getLeasesWithLowScheduleCoverage(
   organizationId: string

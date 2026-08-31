@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { getMonthRentSchedules, summarizeMonthRentSchedules } from "@/data/rent-collection";
 
 export type DashboardStats = {
   propertiesCount: number;
@@ -12,13 +13,6 @@ export type DashboardStats = {
   overdueLeasesCount: number;
   oldestOverdueDueDate: string | null;
 };
-
-function currentMonthRange(): { start: string; end: string } {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
-}
 
 // Agrégats pour les tuiles du tableau de bord — dérivés des vues déjà
 // exploitées ailleurs (properties_effective_status,
@@ -33,12 +27,11 @@ function currentMonthRange(): { start: string; end: string } {
 // (deux notions différentes, pas un bug de délimitation commun).
 export async function getDashboardStats(organizationId: string): Promise<DashboardStats> {
   const supabase = await createClient();
-  const { start, end } = currentMonthRange();
 
   const [
     { data: properties, error: propertiesError },
     { count: buildingsCount, error: buildingsError },
-    { data: monthSchedules, error: monthSchedulesError },
+    monthSchedules,
     { data: overdueSchedules, error: overdueSchedulesError },
   ] = await Promise.all([
     supabase
@@ -49,14 +42,7 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
       .from("buildings")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
-    supabase
-      .from("payment_schedules_effective_status")
-      .select("amount_due, covered_amount")
-      .eq("organization_id", organizationId)
-      .gte("due_date", start)
-      .lte("due_date", end)
-      .neq("effective_status", "annulee")
-      .neq("effective_status", "hors_periode"),
+    getMonthRentSchedules(organizationId),
     supabase
       .from("payment_schedules_effective_status")
       .select("lease_id, due_date, amount_due, covered_amount")
@@ -66,20 +52,14 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
 
   if (propertiesError) throw propertiesError;
   if (buildingsError) throw buildingsError;
-  if (monthSchedulesError) throw monthSchedulesError;
   if (overdueSchedulesError) throw overdueSchedulesError;
 
   const propertiesCount = properties.length;
   const occupiedCount = properties.filter((p) => p.effective_status === "occupe").length;
   const occupancyRate = propertiesCount > 0 ? Math.round((occupiedCount / propertiesCount) * 100) : 0;
 
-  const rentThisMonth = monthSchedules.reduce((sum, s) => sum + (s.amount_due ?? 0), 0);
-  const dueThisMonth = monthSchedules.reduce(
-    (sum, s) => sum + Math.max((s.amount_due ?? 0) - (s.covered_amount ?? 0), 0),
-    0
-  );
-  const collectedThisMonth = rentThisMonth - dueThisMonth;
-  const collectedRate = rentThisMonth > 0 ? Math.round((collectedThisMonth / rentThisMonth) * 100) : 0;
+  const { billedAmount: rentThisMonth, collectedAmount: collectedThisMonth, collectedRate } =
+    summarizeMonthRentSchedules(monthSchedules);
 
   const overdueAmount = overdueSchedules.reduce(
     (sum, s) => sum + Math.max((s.amount_due ?? 0) - (s.covered_amount ?? 0), 0),

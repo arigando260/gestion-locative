@@ -35,9 +35,9 @@ export type LeaseClosureStatus = {
 // une seule définition.
 export const LEASE_END_APPROACHING_DAYS = 30;
 
-export function leaseEndApproachingThresholdDate(): string {
+export function leaseEndApproachingThresholdDate(days: number = LEASE_END_APPROACHING_DAYS): string {
   const d = new Date();
-  d.setDate(d.getDate() + LEASE_END_APPROACHING_DAYS);
+  d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
@@ -71,7 +71,8 @@ export async function getLeaseClosureStatus(leaseId: string): Promise<LeaseClosu
 // keys_returned_at IS NULL suffit à exclure tout bail déjà engagé, un bail
 // 'resilie' n'apparaît jamais ici par construction (filtré ci-dessous).
 export async function getLeasesWithUpcomingEndDate(
-  organizationId: string
+  organizationId: string,
+  days: number = LEASE_END_APPROACHING_DAYS
 ): Promise<LeaseClosureStatus[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -81,7 +82,7 @@ export async function getLeasesWithUpcomingEndDate(
     .eq("status", "actif")
     .is("keys_returned_at", null)
     .not("lease_end_date", "is", null)
-    .lte("lease_end_date", leaseEndApproachingThresholdDate())
+    .lte("lease_end_date", leaseEndApproachingThresholdDate(days))
     .order("lease_end_date", { ascending: true });
 
   if (error) throw error;

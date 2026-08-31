@@ -34,6 +34,37 @@ export type RecordPaymentInput = {
 // constaté manuellement par le staff, donc confirmé immédiatement. Une
 // future intégration passerelle créerait plutôt la ligne en 'en_attente'
 // et la confirmerait via webhook.
+export type SchedulePaymentInfo = { paymentId: string; method: string };
+
+// Le paiement confirmé le plus récent par échéance -- utilisé pour la
+// quittance de /dashboard/loyers (montant réglé lui-même toujours lu depuis
+// covered_amount, vue payment_schedules_effective_status, seule source de
+// vérité du montant ; ceci ne sert qu'à retrouver QUEL paiement quittancer
+// quand un règlement scindé a produit plusieurs lignes confirmées pour la
+// même échéance).
+export async function getLatestConfirmedPaymentsForSchedules(
+  scheduleIds: string[]
+): Promise<Map<string, SchedulePaymentInfo>> {
+  if (scheduleIds.length === 0) return new Map();
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("id, payment_schedule_id, method, payment_date")
+    .in("payment_schedule_id", scheduleIds)
+    .eq("status", "confirme")
+    .order("payment_date", { ascending: false });
+
+  if (error) throw error;
+
+  const map = new Map<string, SchedulePaymentInfo>();
+  for (const row of data ?? []) {
+    if (!row.payment_schedule_id || map.has(row.payment_schedule_id)) continue;
+    map.set(row.payment_schedule_id, { paymentId: row.id, method: row.method });
+  }
+  return map;
+}
+
 export async function recordPayment(input: RecordPaymentInput) {
   const supabase = await createClient();
   return supabase

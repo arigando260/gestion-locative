@@ -1,5 +1,5 @@
 import "server-only";
-import { getLeasesWithLowScheduleCoverage } from "./schedules";
+import { getLeasesWithLowScheduleCoverage, getLeasesWithOverduePayments } from "./schedules";
 import {
   getLeasesWithUpcomingEndDate,
   getLeasesPendingClosure,
@@ -47,6 +47,15 @@ export type DashboardAlert =
       propertyName: string;
       tenantName: string | null;
       balances: { depositType: string; balance: number }[];
+    }
+  | {
+      kind: "rent_overdue";
+      leaseId: string;
+      propertyName: string;
+      tenantName: string | null;
+      tenantPhone: string | null;
+      dueDate: string;
+      amount: number;
     };
 
 // Gate chaque catégorie sur la permission de lecture pertinente — même
@@ -68,6 +77,23 @@ export async function getDashboardAlerts(
         propertyName: lease.property_name ?? "—",
         tenantName: lease.tenant_full_name,
         coverageEndDate: lease.coverage_end_date,
+      });
+    }
+  }
+
+  if (can(permissions, "payment_schedules", "read")) {
+    // Même source que l'accueil agent (getLeasesWithOverduePayments,
+    // data/schedules.ts) -- pas un second calcul de retard.
+    const overdue = await getLeasesWithOverduePayments(organizationId);
+    for (const lease of overdue) {
+      alerts.push({
+        kind: "rent_overdue",
+        leaseId: lease.lease_id,
+        propertyName: lease.property_name,
+        tenantName: lease.tenant_full_name,
+        tenantPhone: lease.tenant_phone,
+        dueDate: lease.due_date,
+        amount: lease.amount_due,
       });
     }
   }
