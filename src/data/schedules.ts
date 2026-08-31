@@ -159,6 +159,7 @@ function upcomingDaysRange(days: number): { start: string; end: string } {
 }
 
 export type UpcomingSchedule = {
+  id: string;
   lease_id: string;
   property_name: string;
   tenant_full_name: string | null;
@@ -181,7 +182,7 @@ export async function getSchedulesDueThisWeek(
   const { start, end } = upcomingDaysRange(days);
   const { data, error } = await supabase
     .from("payment_schedules_effective_status")
-    .select("lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name))")
+    .select("id, lease_id, due_date, amount_due, leases(properties(name), tenant_accounts(full_name))")
     .eq("organization_id", organizationId)
     .eq("effective_status", "en_attente")
     .gte("due_date", start)
@@ -192,12 +193,13 @@ export async function getSchedulesDueThisWeek(
 
   const rows: UpcomingSchedule[] = [];
   for (const row of data ?? []) {
-    if (!row.lease_id || !row.due_date || row.amount_due == null) continue;
+    if (!row.id || !row.lease_id || !row.due_date || row.amount_due == null) continue;
     const lease = row.leases as unknown as {
       properties: { name: string } | null;
       tenant_accounts: { full_name: string | null } | null;
     } | null;
     rows.push({
+      id: row.id,
       lease_id: row.lease_id,
       property_name: lease?.properties?.name ?? "—",
       tenant_full_name: lease?.tenant_accounts?.full_name ?? null,

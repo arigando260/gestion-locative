@@ -103,7 +103,7 @@ export default async function DashboardDeadlinesPage({
       items: dueThisWeek.map((schedule) => {
         const daysUntil = -(daysSince(schedule.due_date) ?? 0);
         return {
-          key: schedule.lease_id,
+          key: schedule.id,
           when: daysUntil <= 0 ? t("dueToday") : t("inDays", { days: daysUntil }),
           whenClass: whenColorClass(daysUntil),
           title: schedule.tenant_full_name ?? schedule.property_name,
