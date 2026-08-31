@@ -7,6 +7,7 @@ import { getUpcomingDeadlinesCount } from "@/data/upcoming-deadlines";
 import { getMonthRentSchedules, summarizeMonthRentSchedules } from "@/data/rent-collection";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { HeaderAddPropertyButton } from "@/components/layout/header-add-property-button";
 import { Sidebar, type SidebarSection } from "@/components/layout/sidebar";
 import {
   LayoutGrid,
@@ -44,6 +45,7 @@ export default async function DashboardLayout({
   const t = await getTranslations("nav");
   const tc = await getTranslations("common");
   const td = await getTranslations("dashboard");
+  const tp = await getTranslations("properties");
   // Premier lien de nav conditionné dans ce projet -- réutilise
   // getCurrentUserPermissions()/can() (data/permissions.ts, déjà utilisée
   // par toutes les autres pages du dashboard, lit la vue my_permissions) :
@@ -72,6 +74,13 @@ export default async function DashboardLayout({
   // seul selon organizations.organization_type (Module 12j/12k, purement
   // cosmétique jusqu'ici) -- aucune nouvelle table/RLS, voir le plan.
   const isOwnerOrg = organization?.organization_type === "proprietaire";
+  // En-tête enrichi (CTA "Ajouter un logement") réservé à l'Espace Agence
+  // -- ni l'agent ni le propriétaire n'ont cet élément dans leur propre
+  // maquette (audit validé), header inchangé pour eux. Permission réelle
+  // (pas juste un gate visuel) : même vérification que le bouton déjà
+  // présent sur /properties (properties/page.tsx), pas de nouvelle regle.
+  const isAgenceContext = !isOwnerOrg && role !== "agent";
+  const canCreateProperty = can(permissions, "properties", "create");
 
   const sections: SidebarSection[] = [
     {
@@ -138,6 +147,9 @@ export default async function DashboardLayout({
       />
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="flex items-center justify-end gap-3 border-b border-border px-4 py-3 sm:px-6">
+          {isAgenceContext && canCreateProperty ? (
+            <HeaderAddPropertyButton label={tp("create")} />
+          ) : null}
           <LocaleSwitcher />
           <LogoutButton />
         </header>

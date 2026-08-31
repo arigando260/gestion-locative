@@ -189,7 +189,7 @@
   },
   "properties": {
     "title": "Logements",
-    "create": "Créer un logement",
+    "create": "Ajouter un logement",
     "createTitle": "Créer un logement",
     "name": "Nom",
     "address": "Adresse",
