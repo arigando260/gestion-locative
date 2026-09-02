@@ -1,9 +1,29 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type Building = Tables<"buildings">;
 export type BuildingWithUnitsCount = Building & { units_count: number };
+
+// COUNT pur, sans les lignes -- source pour getDashboardStats() ET pour la
+// visibilité de "Immeubles" dans la sidebar (layout.tsx, Espace
+// propriétaire), jamais deux calculs séparés. Mis en cache par requête
+// (React cache(), même patron que getCurrentProfile/getCurrentStaffRole,
+// data/session.ts) : layout.tsx et dashboard/page.tsx (via
+// getDashboardStats) l'appellent tous les deux sur le même chargement de
+// page propriétaire -- un seul aller-retour réel, pas deux COUNT
+// identiques.
+export const getBuildingsCount = cache(async (organizationId: string): Promise<number> => {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("buildings")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+
+  if (error) throw error;
+  return count ?? 0;
+});
 
 // Une seule FK entre properties et buildings (properties_building_org_fk,
 // Module 13) : l'embed properties(count) n'est jamais ambigu pour

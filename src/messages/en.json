@@ -19,7 +19,12 @@
     "tenants": "Tenants",
     "team": "Team",
     "settings": "Settings",
-    "logout": "Log out"
+    "logout": "Log out",
+    "sectionMyPortfolio": "MY PORTFOLIO",
+    "sectionFollowUp": "FOLLOW-UP",
+    "propertiesOwner": "{count, plural, one {My property} other {My properties}}",
+    "tenantsOwner": "{count, plural, one {My tenant} other {My tenants}}",
+    "ownerRoleLabel": "Owner"
   },
   "auth": {
     "loginTitle": "Sign in",

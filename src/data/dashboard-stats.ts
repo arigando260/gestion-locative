@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getMonthRentSchedules, summarizeMonthRentSchedules } from "@/data/rent-collection";
+import { getBuildingsCount } from "@/data/buildings";
 
 export type DashboardStats = {
   propertiesCount: number;
@@ -30,7 +31,7 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
 
   const [
     { data: properties, error: propertiesError },
-    { count: buildingsCount, error: buildingsError },
+    buildingsCount,
     monthSchedules,
     { data: overdueSchedules, error: overdueSchedulesError },
   ] = await Promise.all([
@@ -38,10 +39,7 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
       .from("properties_effective_status")
       .select("effective_status")
       .eq("organization_id", organizationId),
-    supabase
-      .from("buildings")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
+    getBuildingsCount(organizationId),
     getMonthRentSchedules(organizationId),
     supabase
       .from("payment_schedules_effective_status")
@@ -51,7 +49,6 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
   ]);
 
   if (propertiesError) throw propertiesError;
-  if (buildingsError) throw buildingsError;
   if (overdueSchedulesError) throw overdueSchedulesError;
 
   const propertiesCount = properties.length;
@@ -73,7 +70,7 @@ export async function getDashboardStats(organizationId: string): Promise<Dashboa
 
   return {
     propertiesCount,
-    buildingsCount: buildingsCount ?? 0,
+    buildingsCount,
     occupancyRate,
     rentThisMonth,
     collectedThisMonth,

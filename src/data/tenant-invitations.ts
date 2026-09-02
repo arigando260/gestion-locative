@@ -90,6 +90,21 @@ export async function getOrgTenants(
   });
 }
 
+// COUNT pur, sans l'embed tenant_accounts -- source pour le libellé de nav
+// "Mon locataire"/"Mes locataires" (layout.tsx, Espace propriétaire). Même
+// table que getOrgTenants ci-dessus (tenant_organization_memberships), pour
+// rester cohérent avec ce que /tenants affiche déjà.
+export async function getOrgTenantsCount(organizationId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("tenant_organization_memberships")
+    .select("tenant_account_id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 // Écriture : {data, error} renvoyé tel quel, jamais throw — la Server
 // Action appelante décide comment le traduire, même convention que
 // data/properties.ts createProperty.

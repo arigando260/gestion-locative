@@ -5,6 +5,9 @@ import { getCurrentUserPermissions, can } from "@/data/permissions";
 import { getOrganization } from "@/data/organizations";
 import { getUpcomingDeadlinesCount } from "@/data/upcoming-deadlines";
 import { getMonthRentSchedules, summarizeMonthRentSchedules } from "@/data/rent-collection";
+import { getBuildingsCount } from "@/data/buildings";
+import { getPropertiesCount } from "@/data/properties";
+import { getOrgTenantsCount } from "@/data/tenant-invitations";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { HeaderAddPropertyButton } from "@/components/layout/header-add-property-button";
@@ -53,27 +56,56 @@ export default async function DashboardLayout({
   // rôle codé en dur ici. La page /team elle-même redirige indépendamment
   // si atteinte directement sans cette permission (défense en profondeur,
   // pas seulement un masquage côté nav).
-  const role = await getCurrentStaffRole();
+  // organization récupérée avant le reste : isOwnerOrg (organization_type)
+  // conditionne quelles requêtes suivantes sont lancées (comptes Espace
+  // propriétaire ci-dessous), donc doit être connue en premier plutôt que
+  // dans le même Promise.all que ce qu'elle conditionne.
+  const [role, organization] = await Promise.all([
+    getCurrentStaffRole(),
+    getOrganization(profile.organization_id),
+  ]);
+  // "Espace propriétaire" (maquette) : même tableau de bord staff, habillage
+  // seul selon organizations.organization_type (Module 12j/12k) -- aucune
+  // nouvelle table/RLS, voir le plan.
+  const isOwnerOrg = organization?.organization_type === "proprietaire";
+
   // Badges "Échéances"/"Loyers & paiements" masqués pour l'agent (même
   // périmètre que les pages elles-mêmes, qui redirigent l'agent) -- inutile
   // de lancer les requêtes sous-jacentes pour un badge qui ne s'affichera
   // jamais. getMonthRentSchedules est la même fonction groupée que celle
   // utilisée par /dashboard/loyers (data/rent-collection.ts) -- une seule
   // requête, pas une par badge.
-  const [permissions, organization, upcomingDeadlinesCount, monthRentSchedules] = await Promise.all([
+  //
+  // Comptes "Mon logement/immeuble/locataire" (Espace propriétaire) :
+  // lancés uniquement si isOwnerOrg -- coût zéro pour l'agence. getBuildingsCount
+  // est mise en cache par requête (React cache(), data/buildings.ts) :
+  // dashboard/page.tsx (via getDashboardStats) lit la même valeur sur le
+  // même chargement de page, un seul aller-retour réel malgré les deux
+  // appels.
+  const [
+    permissions,
+    upcomingDeadlinesCount,
+    monthRentSchedules,
+    ownerBuildingsCount,
+    ownerPropertiesCount,
+    ownerTenantsCount,
+  ] = await Promise.all([
     getCurrentUserPermissions(),
-    getOrganization(profile.organization_id),
     role === "agent" ? Promise.resolve(0) : getUpcomingDeadlinesCount(profile.organization_id),
     role === "agent" ? Promise.resolve([]) : getMonthRentSchedules(profile.organization_id),
+    isOwnerOrg ? getBuildingsCount(profile.organization_id) : Promise.resolve(0),
+    isOwnerOrg ? getPropertiesCount(profile.organization_id) : Promise.resolve(0),
+    isOwnerOrg ? getOrgTenantsCount(profile.organization_id) : Promise.resolve(0),
   ]);
   const rentsSummary = summarizeMonthRentSchedules(monthRentSchedules);
   const rentsBadgeCount = rentsSummary.overdueCount + rentsSummary.partialCount;
   const canManageTeam = can(permissions, "users", "create");
+  // Agence : visibilité par permission, comportement strictement inchangé.
+  // Propriétaire : visibilité par donnée réelle (0 immeuble = rubrique
+  // masquée), décision produit actée -- deux critères différents et
+  // volontairement distincts, jamais fusionnés.
   const canViewBuildings = can(permissions, "buildings", "read");
-  // "Espace propriétaire" (maquette) : même tableau de bord staff, habillage
-  // seul selon organizations.organization_type (Module 12j/12k, purement
-  // cosmétique jusqu'ici) -- aucune nouvelle table/RLS, voir le plan.
-  const isOwnerOrg = organization?.organization_type === "proprietaire";
+  const ownerCanViewBuildings = ownerBuildingsCount > 0;
   // En-tête enrichi (CTA "Ajouter un logement") réservé à l'Espace Agence
   // -- ni l'agent ni le propriétaire n'ont cet élément dans leur propre
   // maquette (audit validé), header inchangé pour eux. Permission réelle
@@ -84,18 +116,26 @@ export default async function DashboardLayout({
 
   const sections: SidebarSection[] = [
     {
-      label: "PARC",
+      label: isOwnerOrg ? t("sectionMyPortfolio") : "PARC",
       items: [
         { href: "/dashboard", label: t("dashboard"), icon: <LayoutGrid className="size-[18px]" /> },
-        { href: "/properties", label: t("properties"), icon: <Home className="size-[18px]" /> },
-        ...(canViewBuildings
+        {
+          href: "/properties",
+          label: isOwnerOrg ? t("propertiesOwner", { count: ownerPropertiesCount }) : t("properties"),
+          icon: <Home className="size-[18px]" />,
+        },
+        ...((isOwnerOrg ? ownerCanViewBuildings : canViewBuildings)
           ? [{ href: "/buildings", label: t("buildings"), icon: <Building2 className="size-[18px]" /> }]
           : []),
-        { href: "/tenants", label: t("tenants"), icon: <Users className="size-[18px]" /> },
+        {
+          href: "/tenants",
+          label: isOwnerOrg ? t("tenantsOwner", { count: ownerTenantsCount }) : t("tenants"),
+          icon: <Users className="size-[18px]" />,
+        },
       ],
     },
     {
-      label: "GESTION",
+      label: isOwnerOrg ? t("sectionFollowUp") : "GESTION",
       items: [
         ...(role !== "agent"
           ? [
@@ -143,7 +183,11 @@ export default async function DashboardLayout({
         appSubtitle={isOwnerOrg ? td("ownerTagline") : tc("appTagline")}
         sections={sections}
         footerName={profile.full_name ?? profile.email}
-        footerSubtitle={organization?.name ?? ""}
+        footerSubtitle={
+          isOwnerOrg && organization?.name
+            ? `${organization.name} · ${t("ownerRoleLabel")}`
+            : (organization?.name ?? "")
+        }
       />
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="flex items-center justify-end gap-3 border-b border-border px-4 py-3 sm:px-6">

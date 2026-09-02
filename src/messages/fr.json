@@ -19,7 +19,12 @@
     "tenants": "Locataires",
     "team": "Équipe",
     "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "sectionMyPortfolio": "MON PARC",
+    "sectionFollowUp": "SUIVI",
+    "propertiesOwner": "{count, plural, one {Mon logement} other {Mes logements}}",
+    "tenantsOwner": "{count, plural, one {Mon locataire} other {Mes locataires}}",
+    "ownerRoleLabel": "Propriétaire"
   },
   "auth": {
     "loginTitle": "Connexion",

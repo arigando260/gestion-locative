@@ -22,6 +22,19 @@ export async function getProperties(): Promise<Property[]> {
   return data;
 }
 
+// COUNT pur, sans les lignes -- source pour le libellé de nav "Mon
+// logement"/"Mes logements" (layout.tsx, Espace propriétaire).
+export async function getPropertiesCount(organizationId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("properties")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getProperty(id: string): Promise<Property | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
