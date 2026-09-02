@@ -663,6 +663,7 @@
     "greeting": "Bonjour, {name} 👋",
     "subtitle": "Voici ce qui se passe aujourd'hui dans votre parc.",
     "statProperties": "Logements",
+    "statPropertiesOwner": "{count, plural, one {Mon logement} other {Mes logements}}",
     "statPropertiesMeta": "{count, plural, one {# immeuble} other {# immeubles}}",
     "statOccupancy": "Taux d'occupation",
     "statRent": "Loyers du mois",

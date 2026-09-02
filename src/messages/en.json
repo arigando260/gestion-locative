@@ -663,6 +663,7 @@
     "greeting": "Hello, {name} 👋",
     "subtitle": "Here's what's happening in your portfolio today.",
     "statProperties": "Units",
+    "statPropertiesOwner": "{count, plural, one {My property} other {My properties}}",
     "statPropertiesMeta": "{count, plural, one {# building} other {# buildings}}",
     "statOccupancy": "Occupancy rate",
     "statRent": "Rent this month",

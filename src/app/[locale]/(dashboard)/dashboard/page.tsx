@@ -180,7 +180,11 @@ export default async function DashboardPage({
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
-          label={t("statProperties")}
+          label={
+            isOwnerOrg
+              ? t("statPropertiesOwner", { count: stats.propertiesCount })
+              : t("statProperties")
+          }
           value={String(stats.propertiesCount)}
           meta={t("statPropertiesMeta", { count: stats.buildingsCount })}
         />
