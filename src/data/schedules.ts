@@ -54,10 +54,24 @@ export type LeaseScheduleCoverage = Tables<"leases_schedule_coverage">;
 // comme "à compléter". Une seule définition, réutilisée aux deux endroits
 // plutôt que dupliquée (auparavant inline sur leases/[leaseId]/page.tsx
 // sous le nom stillRoomToGrow, absente de getLeasesWithLowScheduleCoverage).
+//
+// Exception — reconduction tacite (Module 10l) : un bail encore ACTIF dont
+// end_date est dépassée n'est jamais réellement "complet", il continue en
+// horizon glissant (même principe que le générateur, dont le plafond
+// effectif ignore end_date dans exactement ce cas). Sans ce cas particulier,
+// dès que la couverture générée atteint l'ancienne end_date, cette fonction
+// répondrait "rien à faire" et empêcherait à la fois l'extension silencieuse
+// et l'alerte "couverture faible" de jamais relancer le générateur corrigé.
 export function hasRoomToGrowSchedules(
+  leaseStatus: string,
   leaseEndDate: string | null,
   coverageEndDate: string | null
 ): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  const isTacitRenewal =
+    leaseStatus === "actif" && leaseEndDate !== null && leaseEndDate <= today;
+  if (isTacitRenewal) return true;
+
   return (
     leaseEndDate === null ||
     coverageEndDate === null ||
@@ -232,6 +246,9 @@ export async function getLeasesWithLowScheduleCoverage(
 
   if (error) throw error;
   return data.filter((lease) =>
-    hasRoomToGrowSchedules(lease.lease_end_date, lease.coverage_end_date)
+    // lease.status est typé nullable côté vue (comportement de génération
+    // Supabase pour les colonnes de vue), mais la requête ci-dessus filtre
+    // déjà .eq("status", "actif") -- jamais réellement null à l'exécution.
+    hasRoomToGrowSchedules(lease.status ?? "", lease.lease_end_date, lease.coverage_end_date)
   );
 }

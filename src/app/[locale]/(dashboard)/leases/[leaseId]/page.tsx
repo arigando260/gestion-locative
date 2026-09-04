@@ -75,7 +75,7 @@ export default async function LeasePage({
       const lowCoverage =
         coverage.coverage_end_date === null ||
         coverage.coverage_end_date < threshold;
-      if (hasRoomToGrowSchedules(lease.end_date, coverage.coverage_end_date) && lowCoverage) {
+      if (hasRoomToGrowSchedules(lease.status, lease.end_date, coverage.coverage_end_date) && lowCoverage) {
         try {
           await generateSchedulesForLease(lease.id);
         } catch {
