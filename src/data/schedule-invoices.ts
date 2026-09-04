@@ -65,8 +65,12 @@ export type InvoiceGenerationContext = {
 // appartient bien à ce bail (defense in depth : le trigger de cohérence sur
 // invoice_schedule_items, Module 9, le bloquerait de toute façon à
 // l'insertion, mais autant ne pas rendre/uploader un PDF pour une sélection
-// invalide). Renvoie null si le bail est introuvable ou si une seule
-// échéance ne correspond pas.
+// invalide). Exclut aussi status='annulee' (même motif que
+// data/building-invoicing.ts) : une échéance annulée (Module 10l -- au-delà
+// de la date de résiliation) ne doit jamais être facturable, même si un
+// schedule_id annulé arrivait malgré tout dans scheduleIds (contournement du
+// formulaire, appel direct de l'action). Renvoie null si le bail est
+// introuvable ou si une seule échéance ne correspond pas / est annulée.
 export async function getInvoiceGenerationContext(
   leaseId: string,
   scheduleIds: string[]
@@ -105,6 +109,7 @@ export async function getInvoiceGenerationContext(
     .from("payment_schedules")
     .select("id, period_start_date, period_end_date, due_date, amount_due")
     .eq("lease_id", leaseId)
+    .neq("status", "annulee")
     .in("id", scheduleIds);
 
   if (scheduleError) throw scheduleError;

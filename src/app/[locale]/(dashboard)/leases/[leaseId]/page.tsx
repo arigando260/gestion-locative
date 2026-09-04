@@ -294,7 +294,10 @@ export default async function LeasePage({
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{tb("invoicesTitle")}</h2>
         {can(permissions, "schedule_invoices", "create") && (
-          <InvoiceGenerateForm leaseId={lease.id} schedules={schedules} />
+          <InvoiceGenerateForm
+            leaseId={lease.id}
+            schedules={schedules.filter((s) => s.status !== "annulee")}
+          />
         )}
         <InvoiceList invoices={invoices} />
       </div>
